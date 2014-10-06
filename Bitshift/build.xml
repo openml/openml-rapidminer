@@ -5,7 +5,7 @@
 	    <javac includeantruntime="false" />
 	  </presetdef>
 	
-	<property name="rm.dir" location="../Rapidminer" />
+	<property name="rm.dir" location="../../Rapidminer_Unuk" />
 
 	<property name="build.build" location="build" />
 	<property name="build.resources" location="resources" />
