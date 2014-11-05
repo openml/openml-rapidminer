@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<operators name="template" version="5.0" docbundle="com/rapidminer/resources/i18n/OperatorsDocTemplate">
+   <group key="">
+      <group key="data_transformation">
+         <operator>
+            <key>ExecuteOpenmlTask</key>
+            <class>org.openml.rapidminer.ExecuteOpenmlTask</class>
+         </operator>
+      </group>
+   </group>
+</operators>
