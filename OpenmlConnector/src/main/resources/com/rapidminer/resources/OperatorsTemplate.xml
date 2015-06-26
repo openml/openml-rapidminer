@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<operators name="template" version="5.0" docbundle="com/rapidminer/resources/i18n/OperatorsDocTemplate">
+   <group key="">
+      <group key="process_control">
+         <operator>
+            <key>Execute Openml Task</key>
+            <class>org.openml.rapidminer.ExecuteOpenmlTask</class>
+            <icon>gear.png</icon>
+         </operator>
+      </group>
+      <group key="import">
+         <group key="other">
+            <operator>
+               <key>Download Openml Task</key>
+               <class>org.openml.rapidminer.DownloadOpenmlTask</class>
+               <icon>import.png</icon>
+            </operator>
+         </group>
+      </group>
+      <group key="export">
+         <group key="other">
+            <operator>
+               <key>Upload Openml Task</key>
+               <class>org.openml.rapidminer.UploadOpenmlTask</class>
+               <icon>export2.png</icon>
+            </operator>
+         </group>
+      </group>
+   </group>
+</operators>
