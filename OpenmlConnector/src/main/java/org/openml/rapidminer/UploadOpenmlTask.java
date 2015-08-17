@@ -15,10 +15,12 @@ import org.openml.apiconnector.xml.Run;
 import org.openml.apiconnector.xstream.XstreamXmlMapping;
 import org.openml.rapidminer.models.OpenmlExecutedTask;
 import org.openml.rapidminer.utils.ImplementationUtils;
+import org.openml.rapidminer.utils.XMLUtils;
 
 import com.rapidminer.operator.Operator;
 import com.rapidminer.operator.OperatorDescription;
 import com.rapidminer.operator.OperatorException;
+import com.rapidminer.operator.ProcessRootOperator;
 import com.rapidminer.operator.ports.InputPort;
 import com.rapidminer.parameter.ParameterType;
 import com.rapidminer.parameter.ParameterTypePassword;
@@ -62,7 +64,10 @@ public class UploadOpenmlTask extends Operator {
 		try {
 			// TODO: do something smart with the XML, to prevent duplicates. 
 			// TODO: wipe all parameter settings from xml!!! (and put them in parameter string?)
-			String processXml = getProcess().getRootOperator().getXML(true);
+			
+			//ProcessRootOperator pro = getProcess().getRootOperator();
+			
+			String processXml = XMLUtils.prepare( getProcess().getRootOperator().getXML(true) );
 			// TODO: make the user enter his meta-data!
 			Implementation workflow = new Implementation("RapidMinerWorkflow", Hashing.md5(processXml), "RapidMiner workflow", "English", "RapidMiner_6.4.0");
 			int implementation_id = ImplementationUtils.getImplementationId(workflow, processXml, openmlConnector);
