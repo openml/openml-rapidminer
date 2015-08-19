@@ -69,8 +69,6 @@ public class UploadOpenmlTask extends Operator {
 		try {
 			// TODO: wipe all parameter settings from xml!!! (and put them in parameter string?)
 			
-			//ProcessRootOperator pro = getProcess().getRootOperator();
-			
 			String processXml = XMLUtils.prepare( getProcess().getRootOperator().getXML(true) );
 			// TODO: make the user enter his meta-data!
 			Implementation workflow = new Implementation("RapidMinerWorkflow", Hashing.md5(processXml), "RapidMiner workflow", "English", "RapidMiner_6.4.0");

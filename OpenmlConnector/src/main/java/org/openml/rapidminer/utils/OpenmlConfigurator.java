@@ -3,6 +3,7 @@ package org.openml.rapidminer.utils;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.openml.apiconnector.settings.Settings;
 import org.openml.rapidminer.models.OpenmlConfigurable;
 
 import com.rapidminer.parameter.ParameterType;
@@ -26,7 +27,7 @@ public class OpenmlConfigurator extends Configurator<OpenmlConfigurable> {
 	@Override
 	public List<ParameterType> getParameterTypes() {
 		List<ParameterType> types = new ArrayList<ParameterType>();
-		types.add(new ParameterTypeString(PARAMETER_URL, "OpenML Url", "http://www.openml.org/"));
+		types.add(new ParameterTypeString(PARAMETER_URL, "OpenML Url", Settings.BASE_URL));
 		types.add(new ParameterTypeString(PARAMETER_USERNAME, "OpenML username", false));
 		types.add(new ParameterTypePassword(PARAMETER_PASSWORD, "OpenML password"));
 		
