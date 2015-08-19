@@ -9,36 +9,36 @@ import org.openml.apiconnector.algorithms.Conversion;
 import org.openml.apiconnector.algorithms.Hashing;
 import org.openml.apiconnector.io.HttpConnector;
 import org.openml.apiconnector.io.OpenmlConnector;
-import org.openml.apiconnector.settings.Settings;
 import org.openml.apiconnector.xml.Implementation;
 import org.openml.apiconnector.xml.Run;
 import org.openml.apiconnector.xstream.XstreamXmlMapping;
+import org.openml.rapidminer.models.OpenmlConfigurable;
 import org.openml.rapidminer.models.OpenmlExecutedTask;
 import org.openml.rapidminer.utils.ImplementationUtils;
+import org.openml.rapidminer.utils.OpenmlConfigurator;
 import org.openml.rapidminer.utils.XMLUtils;
 
 import com.rapidminer.operator.Operator;
 import com.rapidminer.operator.OperatorDescription;
 import com.rapidminer.operator.OperatorException;
-import com.rapidminer.operator.ProcessRootOperator;
+import com.rapidminer.operator.UserError;
 import com.rapidminer.operator.ports.InputPort;
 import com.rapidminer.parameter.ParameterType;
-import com.rapidminer.parameter.ParameterTypePassword;
-import com.rapidminer.parameter.ParameterTypeString;
-import com.rapidminer.parameter.UndefinedParameterError;
 import com.rapidminer.tools.WekaInstancesAdaptor;
 import com.rapidminer.tools.WekaTools;
+import com.rapidminer.tools.config.ConfigurationException;
+import com.rapidminer.tools.config.ConfigurationManager;
+import com.rapidminer.tools.config.ParameterTypeConfigurable;
 import com.rapidminer.tools.plugin.Plugin;
 import com.thoughtworks.xstream.core.ClassLoaderReference;
 
 public class UploadOpenmlTask extends Operator {
 
+	private static String PARAMETER_CONFIG = "OpenML Connection";
+	private static final String[] TAGS = {"RapidMiner"};
+	
 	private OpenmlConnector openmlConnector;
 
-	private static final String PARAMETER_URL = "Url";
-	private static final String PARAMETER_USERNAME = "Username";
-	private static final String PARAMETER_PASSWORD = "Password";
-	private static final String[] TAGS = {"RapidMiner"};
 	
 	private InputPort predictionsInput = getInputPorts().createPort("predictions",OpenmlExecutedTask.class);
 	
@@ -49,20 +49,24 @@ public class UploadOpenmlTask extends Operator {
 	@Override
 	public void doWork() throws OperatorException {
 		OpenmlExecutedTask oet = predictionsInput.getData(OpenmlExecutedTask.class);
+		OpenmlConfigurable config;
 		
-		String username = "";
-		String password = "";
-		String url = Settings.BASE_URL;
+		try {
+			config = (OpenmlConfigurable) ConfigurationManager.getInstance().lookup(
+					OpenmlConfigurator.TYPE_ID, getParameterAsString(PARAMETER_CONFIG),
+					getProcess().getRepositoryAccessor());
+		} catch (ConfigurationException e) {
+			throw new UserError(this, e, "openml.configuration_read");
+		}
 		
-		try { username = getParameterAsString(PARAMETER_USERNAME); } catch(UndefinedParameterError eupe ) { Conversion.log("Error","Parameter","Can't find parameter: " + PARAMETER_USERNAME ); }
-		try { password = getParameterAsString(PARAMETER_PASSWORD); } catch(UndefinedParameterError eupe ) { Conversion.log("Error","Parameter","Can't find parameter: " + PARAMETER_PASSWORD );}
-		try { url      = getParameterAsString(PARAMETER_URL);      } catch(UndefinedParameterError eupe ) { Conversion.log("Error","Parameter","Can't find parameter: " + PARAMETER_URL );}
+		String username = config.getUsername();
+		String password = config.getPassword();
+		String url = config.getUrl();
 		
 		openmlConnector = new OpenmlConnector(url,username,password);
 		HttpConnector.xstreamClient = XstreamXmlMapping.getInstance(new ClassLoaderReference(Plugin.getMajorClassLoader()));
 		
 		try {
-			// TODO: do something smart with the XML, to prevent duplicates. 
 			// TODO: wipe all parameter settings from xml!!! (and put them in parameter string?)
 			
 			//ProcessRootOperator pro = getProcess().getRootOperator();
@@ -91,9 +95,7 @@ public class UploadOpenmlTask extends Operator {
 	@Override
 	public List<ParameterType> getParameterTypes() {
 		List<ParameterType> types = super.getParameterTypes();
-		types.add(new ParameterTypeString(PARAMETER_URL, "OpenML Url", "http://www.openml.org/"));
-		types.add(new ParameterTypeString(PARAMETER_USERNAME, "OpenML username", false));
-		types.add(new ParameterTypePassword(PARAMETER_PASSWORD, "OpenML password"));
+		types.add(new ParameterTypeConfigurable(PARAMETER_CONFIG, "Choose an OpenML Connection", OpenmlConfigurator.TYPE_ID));
 		return types;
 	}
 }
