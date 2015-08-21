@@ -67,11 +67,13 @@ public class UploadOpenmlTask extends Operator {
 		HttpConnector.xstreamClient = XstreamXmlMapping.getInstance(new ClassLoaderReference(Plugin.getMajorClassLoader()));
 		
 		try {
-			// TODO: wipe all parameter settings from xml!!! (and put them in parameter string?)
+			// TODO: extract parameter settings from xml, and put them correctly in parameter string
+			// TODO: check whether the plugin obays the OpenML standard (i.e., all operators used at most once)
 			
 			String processXml = XMLUtils.prepare( getProcess().getRootOperator().getXML(true) );
 			String processName = XMLUtils.xmlToProcessName(processXml);
 			// TODO: make the user enter his other meta-data!
+			// TODO: workflow components in OpenMl representation.
 			Implementation workflow = new Implementation(processName, Hashing.md5(processXml), "RapidMiner workflow", "English", "RapidMiner_6.4.0");
 			int implementation_id = ImplementationUtils.getImplementationId(workflow, processXml, openmlConnector);
 			

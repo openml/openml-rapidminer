@@ -3,7 +3,7 @@
    <group key="">
       <group key="process_control">
          <operator>
-            <key>Execute Openml Task</key>
+            <key>execute_openml_task</key>
             <class>org.openml.rapidminer.ExecuteOpenmlTask</class>
             <icon>gear.png</icon>
          </operator>
@@ -11,7 +11,7 @@
       <group key="import">
          <group key="other">
             <operator>
-               <key>Download Openml Task</key>
+               <key>download_openml_task</key>
                <class>org.openml.rapidminer.DownloadOpenmlTask</class>
                <icon>import.png</icon>
             </operator>
@@ -20,7 +20,7 @@
       <group key="export">
          <group key="other">
             <operator>
-               <key>Upload Openml Task</key>
+               <key>upload_openml_task</key>
                <class>org.openml.rapidminer.UploadOpenmlTask</class>
                <icon>export2.png</icon>
             </operator>
