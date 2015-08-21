@@ -1,63 +1,63 @@
 plugins {
-	id 'com.rapidminer.extension' version '0.6.2'
+  id 'com.rapidminer.extension' version '0.6.2'
 }
 
 apply plugin: 'com.rapidminer.extension'
 
 // Define Maven artifact repositories
 repositories {
-    jcenter()
-    maven { 
-    	url 'https://dl.bintray.com/rapidminer/public/' 
-    }
-    maven { 
-    	url 'https://dl.bintray.com/rapidminer/open-source/' 
-    }
+  jcenter()
+  maven { 
+    url 'https://dl.bintray.com/rapidminer/public/' 
+  }
+  maven { 
+    url 'https://dl.bintray.com/rapidminer/open-source/' 
+  }
 }
 
 extensionConfig {
-	name 'OpenmlConnector'
+  name 'OpenmlConnector'
 
-    /*
-     * The artefact group which will be used when publishing the extensions Jar.
-     * By default it is 'com.rapidminer.extension'.
-     */
-    groupId = 'org.openml.rapidminer'
+  /*
+   * The artefact group which will be used when publishing the extensions Jar.
+   * By default it is 'com.rapidminer.extension'.
+   */
+  groupId = 'org.openml.rapidminer'
 
-    /*
-     * The extension vendor which will be displayed in the extensions about box.
-	 * By default it is 'RapidMiner GmbH'.
-     */
-    vendor = "OpenML.org"
+  /*
+   * The extension vendor which will be displayed in the extensions about box.
+   * By default it is 'RapidMiner GmbH'.
+   */
+  vendor = "OpenML.org"
 
-    /*
-     * The vendor homepage which will be displayed in the extensions about box.
-     * By default it is 'www.rapidminer.com'.
-     */
-    homepage = "http://www.openml.org/"
+  /*
+   * The vendor homepage which will be displayed in the extensions about box.
+   * By default it is 'www.rapidminer.com'.
+   */
+  homepage = "http://www.openml.org/"
 
-	/*
-	 * The relative path to RapidMiner Studio. It will be used by the
-	 * 'installExtension' task to copy the extension Jar to $rapidminerHome/lib/plugins/ 
-	 */
-	rapidminerHome = '../../../apps/rapidminer-studio'
+  /*
+   * The relative path to RapidMiner Studio. It will be used by the
+   * 'installExtension' task to copy the extension Jar to $rapidminerHome/lib/plugins/ 
+   */
+  rapidminerHome = '../../../apps/rapidminer-studio'
 
-	// define RapidMiner version and extension dependencies
-	dependencies {
-       rapidminer '5.3.0'
-       
-       // Only needed for version 5.3.0
-       useAntArtifact true
+  // define RapidMiner version and extension dependencies
+  dependencies {
+    rapidminer '5.3.0'
+    
+    // Only needed for version 5.3.0
+    useAntArtifact true
 
-		//extension namespace: 'text', version: '6.1.0'
-	}
+    //extension namespace: 'text', version: '6.1.0'
+  }
 }
 
 // Define third party library dependencies
 dependencies {
-	compile 'org.openml:apiconnector:1.0.5'
-	compile 'nz.ac.waikato.cms.weka:weka-dev:3.7.12'
-	
-	// VLDocking as docking framework (https://code.google.com/p/vldocking/)
-	provided 'com.rapidminer.external:vldocking:1.0.0'
+  compile 'org.openml:apiconnector:1.0.6'
+  compile 'nz.ac.waikato.cms.weka:weka-dev:3.7.12'
+  
+  // VLDocking as docking framework (https://code.google.com/p/vldocking/)
+  provided 'com.rapidminer.external:vldocking:1.0.0'
 }

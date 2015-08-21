@@ -70,15 +70,14 @@ public class UploadOpenmlTask extends Operator {
 		HttpConnector.xstreamClient = XstreamXmlMapping.getInstance(new ClassLoaderReference(Plugin.getMajorClassLoader()));
 		
 		try {
-			// TODO: extract parameter settings from xml, and put them correctly in parameter string
 			// TODO: make the user enter his other meta-data!
-			
 			String processXml = XMLUtils.prepare(getProcess().getRootOperator().getXML(true));
 			Implementation workflow = XMLUtils.xmlToImplementation(processXml);
+			
 			int implementation_id = ImplementationUtils.getImplementationId(workflow, processXml, openmlConnector);
 
 			// TODO: resolve parameter string
-			Run run = new Run(oet.getTaskId(), null, implementation_id, "", null, TAGS);
+			Run run = XMLUtils.xmlToRun(getProcess().getRootOperator().getXML(true), openmlConnector, implementation_id, oet.getTaskId(), TAGS); //new Run(oet.getTaskId(), null, implementation_id, "", null, TAGS);
 			
 			Map<String,File> files = new HashMap<String, File>();
 			String taskName = "openml-task-" + oet.getTaskId() + "-predictions"; 

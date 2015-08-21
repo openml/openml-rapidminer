@@ -5,6 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
+import java.text.Normalizer;
+import java.text.Normalizer.Form;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -17,7 +19,10 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.openml.apiconnector.algorithms.Conversion;
 import org.openml.apiconnector.algorithms.Hashing;
+import org.openml.apiconnector.io.OpenmlConnector;
 import org.openml.apiconnector.xml.Implementation;
+import org.openml.apiconnector.xml.Run;
+import org.openml.apiconnector.xml.Run.Parameter_setting;
 import org.w3c.dom.*;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 import org.w3c.dom.ls.DOMImplementationLS;
@@ -25,11 +30,14 @@ import org.w3c.dom.ls.LSOutput;
 import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.SAXException;
 
+import com.rapidminer.operator.Operator;
 import com.rapidminer.operator.OperatorCreationException;
+import com.rapidminer.parameter.ParameterType;
 import com.rapidminer.tools.OperatorService;
 
 public class XMLUtils {
-
+	private static String illegalClassPrefix = "openmlconnector:";
+	
 	public static String prepare(String xml)
 			throws ParserConfigurationException, SAXException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, ClassCastException {
 		final String[] removeAttributes = { "height", "width", "x", "y", "expanded"};
@@ -127,7 +135,7 @@ public class XMLUtils {
 		}
 		
 		if (classifiers.size() > 0) {
-			return "rm." + join(classifiers, "_");
+			return "rm.process." + join(classifiers, "_");
 		} else {
 			return "rm.NamelessRapidMinerProcess";
 		}
@@ -143,7 +151,7 @@ public class XMLUtils {
 	
 
 	public static Implementation xmlToImplementation(String xml)
-			throws ParserConfigurationException, SAXException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, ClassCastException, NoSuchAlgorithmException {
+			throws ParserConfigurationException, SAXException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, ClassCastException, NoSuchAlgorithmException, OperatorCreationException {
 		InputStream is = new ByteArrayInputStream(xml.getBytes());
 		DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
@@ -158,9 +166,11 @@ public class XMLUtils {
 		return workflow;
 	}
 	
-	private static Implementation processOperator(Node node, int depth) throws ParserConfigurationException, SAXException, IOException {
-		String operatorName = ((Element) node).getAttribute("class");
+	private static Implementation processOperator(Node node, int depth) throws ParserConfigurationException, SAXException, IOException, OperatorCreationException {
+		String operatorClass = ((Element) node).getAttribute("class");
 		String operatorVersion = ((Element) node).getAttribute("compatibility");
+		
+		String operatorName = toOpenmlName(operatorClass);
 		
 		Implementation current = new Implementation(operatorName, operatorVersion, "A RapidMiner Operator", "English", "RapidMiner_6.4.0");
 	    
@@ -181,7 +191,7 @@ public class XMLUtils {
 	    return current;
 	}
 	
-	private static List<Implementation> processProcess(Node node, int depth) throws ParserConfigurationException, SAXException, IOException {
+	private static List<Implementation> processProcess(Node node, int depth) throws ParserConfigurationException, SAXException, IOException, OperatorCreationException {
 		List<Implementation> subWorkflows = new ArrayList<Implementation>();
 		
 	    NodeList nodeList = node.getChildNodes();
@@ -190,10 +200,56 @@ public class XMLUtils {
 	        if (currentNode.getNodeType() == Node.ELEMENT_NODE) {
 	            //calls this method for all the children which is Element
 	        	if (currentNode.getNodeName().equals("operator")) {
-	        		subWorkflows.add(processOperator(currentNode, depth+1));
+	        		Implementation subflow = processOperator(currentNode, depth+1);
+	        		
+	        		// Don't add OpenML Package operators ... 
+	        		String operatorClass = ((Element) currentNode).getAttribute("class");
+	        		Operator operator = OperatorService.createOperator(operatorClass);
+	        		if( operator.getOperatorClassName().startsWith(illegalClassPrefix) == false ) { 
+		        		for (String parameterName : operator.getParameters()) {
+		        			ParameterType type = operator.getParameterType(parameterName);
+		        			
+		        			subflow.addParameter(parameterName, "", type.getDefaultValueAsString(), type.getDescription());
+		        		}
+	        		
+		        		subWorkflows.add(subflow);
+	        		}
 	        	}
 	        }
 	    }
 	    return subWorkflows;
+	}
+	
+	public static Run xmlToRun(String xml, OpenmlConnector connector, int implementation_id, int task_id, String[] TAGS)
+			throws Exception {
+		
+		InputStream is = new ByteArrayInputStream(xml.getBytes());
+		DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
+		Document rapidMinerProcess = docBuilder.parse(is);
+		
+		List<Parameter_setting> params = new ArrayList<Parameter_setting>();
+		NodeList nodes = rapidMinerProcess.getElementsByTagName("parameter");
+	    for(int i = 0; i < nodes.getLength(); i++){ 
+	    	Element parameter = (Element) nodes.item(i); 
+	    	Element operator = (Element) nodes.item(i).getParentNode();
+	    	if( operator.getAttribute("class").startsWith(illegalClassPrefix) == false ) { 
+		    	String flowName = toOpenmlName(operator.getAttribute("class"));
+		    	String flowVersion = operator.getAttribute("compatibility");
+		    	String paramKey = parameter.getAttribute("key");
+		    	String paramValue = parameter.getAttribute("value");
+		    	// TODO: we can do this in one api call to implementation.get (and store all ids of sub workflows)
+		    	Integer component = connector.implementationExists( flowName, flowVersion ).getId(); 
+		    	Parameter_setting ps = new Parameter_setting(component, paramKey, paramValue);
+		    	params.add(ps);
+	    	}
+	    }
+		Run run = new Run(task_id, null, implementation_id, null, params.toArray(new Parameter_setting[params.size()]), TAGS);
+		return run;
+	}
+	
+	private static String toOpenmlName(String rapidMinerName) {
+		String operatorName = "rm.operator." + Normalizer.normalize(rapidMinerName, Form.NFD);
+		return operatorName.replaceAll("[^A-Za-z0-9_\\-\\.]", "");
 	}
 }

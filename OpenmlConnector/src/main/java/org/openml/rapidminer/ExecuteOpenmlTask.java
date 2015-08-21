@@ -19,6 +19,7 @@ import com.rapidminer.example.ExampleSet;
 import com.rapidminer.example.set.Partition;
 import com.rapidminer.example.set.SplittedExampleSet;
 import com.rapidminer.example.table.AttributeFactory;
+import com.rapidminer.example.table.DataRowFactory;
 import com.rapidminer.example.table.DoubleArrayDataRow;
 import com.rapidminer.example.table.MemoryExampleTable;
 import com.rapidminer.operator.Model;
@@ -27,6 +28,7 @@ import com.rapidminer.operator.OperatorDescription;
 import com.rapidminer.operator.OperatorException;
 import com.rapidminer.operator.ports.InputPort;
 import com.rapidminer.operator.ports.OutputPort;
+import com.rapidminer.operator.preprocessing.MaterializeDataInMemory;
 import com.rapidminer.tools.Ontology;
 import com.rapidminer.tools.WekaTools;
 
@@ -98,14 +100,19 @@ public class ExecuteOpenmlTask extends OperatorChain {
 					SplittedExampleSet splittedES = getSubsample(dataset, splits, r, f, s);
 					// 1 means training, 2 means testing
 					splittedES.selectSingleSubset(1);
-					trainingProcessExampleSetOutput.deliver(splittedES);
+					// Materialize = clean copy
+					ExampleSet trainingSet = MaterializeDataInMemory.materializeExampleSet(splittedES, DataRowFactory.TYPE_DOUBLE_ARRAY);
+					splittedES.selectSingleSubset(2);
+					// Materialize = clean copy
+					ExampleSet testSet = MaterializeDataInMemory.materializeExampleSet(splittedES, DataRowFactory.TYPE_DOUBLE_ARRAY);
+					
+					trainingProcessExampleSetOutput.deliver(trainingSet);
 					
 					getSubprocess(0).execute();
 					
 					Model model = trainingProcessModelInput.getData(Model.class);
-					splittedES.selectSingleSubset(2);
 					
-					ExampleSet results = model.apply(splittedES);
+					ExampleSet results = model.apply(testSet);
 					
 					for(int i = 0; i < results.size(); ++i ) {
 						double[] data = new double[predictionSetAttributes.size()];
