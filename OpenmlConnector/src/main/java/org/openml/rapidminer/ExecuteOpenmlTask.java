@@ -61,8 +61,8 @@ public class ExecuteOpenmlTask extends OperatorChain {
 		} catch( Exception e ) {
 			System.out.println("Exception: " + e.getMessage() );
 			e.printStackTrace();
+			throw new OperatorException(e.getMessage());
 		}
-		 
 	}
 	
 	private ExampleSet executeOpenmlTask( OpenmlTask openmlTask ) throws Exception {

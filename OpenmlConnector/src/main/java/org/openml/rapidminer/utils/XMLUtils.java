@@ -4,18 +4,24 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.openml.apiconnector.algorithms.Conversion;
 import org.w3c.dom.*;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSOutput;
 import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.SAXException;
+
+import com.rapidminer.operator.OperatorCreationException;
+import com.rapidminer.tools.OperatorService;
 
 public class XMLUtils {
 
@@ -68,6 +74,46 @@ public class XMLUtils {
 		writer.write(document, output);
 		
 		return baos.toString();
+	}
+	
+	public static String xmlToProcessName(String xml) throws ParserConfigurationException, SAXException, IOException {
+		List<String> classifiers = new ArrayList<String>();
+		
+		InputStream is = new ByteArrayInputStream(xml.getBytes());
+		DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
+		Document document = docBuilder.parse(is);
+		
+		// iterate over all operators
+		NodeList nodes = document.getElementsByTagName("operator");
+	    for(int i = 0; i < nodes.getLength(); i++){
+	        Element element = (Element)nodes.item(i);
+			try {
+				String className = element.getAttribute("class");
+				String packageName = OperatorService.createOperator(className).getClass().getPackage().toString();
+				
+				if (packageName.contains(".learner.")) {
+					classifiers.add(className.replace(" ", ""));
+				}
+			} catch (OperatorCreationException e) {
+				Conversion.log( "Warning", "ProcessXMLToName", "Could not create operator: " + e.getMessage() );
+			}
+		}
+		
+		
+		if (classifiers.size() > 0) {
+			return "rm." + join(classifiers, "_");
+		} else {
+			return "rm.NamelessRapidMinerProcess";
+		}
+	}
+	
+	private static String join(List<String> words, String delim) {
+		StringBuilder sb = new StringBuilder();
+		for ( String word : words ) {
+			sb.append( delim + word );
+		}
+		return sb.toString().substring(1);
 	}
 
 }
