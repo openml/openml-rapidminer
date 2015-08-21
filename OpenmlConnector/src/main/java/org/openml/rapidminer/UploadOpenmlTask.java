@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.openml.apiconnector.algorithms.Conversion;
-import org.openml.apiconnector.algorithms.Hashing;
 import org.openml.apiconnector.io.HttpConnector;
 import org.openml.apiconnector.io.OpenmlConnector;
 import org.openml.apiconnector.xml.Implementation;
@@ -72,14 +71,12 @@ public class UploadOpenmlTask extends Operator {
 		
 		try {
 			// TODO: extract parameter settings from xml, and put them correctly in parameter string
-			
-			String processXml = XMLUtils.prepare( getProcess().getRootOperator().getXML(true) );
-			String processName = XMLUtils.xmlToProcessName(processXml);
 			// TODO: make the user enter his other meta-data!
-			// TODO: workflow components in OpenMl representation.
-			Implementation workflow = new Implementation(processName, Hashing.md5(processXml), "RapidMiner workflow", "English", "RapidMiner_6.4.0");
-			int implementation_id = ImplementationUtils.getImplementationId(workflow, processXml, openmlConnector);
 			
+			String processXml = XMLUtils.prepare(getProcess().getRootOperator().getXML(true));
+			Implementation workflow = XMLUtils.xmlToImplementation(processXml);
+			int implementation_id = ImplementationUtils.getImplementationId(workflow, processXml, openmlConnector);
+
 			// TODO: resolve parameter string
 			Run run = new Run(oet.getTaskId(), null, implementation_id, "", null, TAGS);
 			
