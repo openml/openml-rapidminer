@@ -48,6 +48,10 @@ public class UploadOpenmlTask extends Operator {
 	
 	@Override
 	public void doWork() throws OperatorException {
+		if (XMLUtils.validProcess(getProcess().getRootOperator().getXML(true)) == false) {
+			throw new OperatorException("Not a valid OpenML process. Please check the OpenML definition. Note that each operator can only be used once. ");
+		}
+		
 		OpenmlExecutedTask oet = predictionsInput.getData(OpenmlExecutedTask.class);
 		OpenmlConfigurable config;
 		
@@ -68,7 +72,6 @@ public class UploadOpenmlTask extends Operator {
 		
 		try {
 			// TODO: extract parameter settings from xml, and put them correctly in parameter string
-			// TODO: check whether the plugin obays the OpenML standard (i.e., all operators used at most once)
 			
 			String processXml = XMLUtils.prepare( getProcess().getRootOperator().getXML(true) );
 			String processName = XMLUtils.xmlToProcessName(processXml);

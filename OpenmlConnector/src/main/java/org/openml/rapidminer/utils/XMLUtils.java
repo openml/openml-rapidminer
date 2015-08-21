@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -74,6 +76,32 @@ public class XMLUtils {
 		writer.write(document, output);
 		
 		return baos.toString();
+	}
+	
+	// some processes do not comply to the OpenML standard. 
+	// this function detects them. 
+	public static boolean validProcess(String xml) {
+		try {
+			Set<String> classifiers = new HashSet<String>();
+			
+			InputStream is = new ByteArrayInputStream(xml.getBytes());
+			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
+			Document document = docBuilder.parse(is);
+			
+			// iterate over all operators
+			NodeList nodes = document.getElementsByTagName("operator");
+		    for(int i = 0; i < nodes.getLength(); i++){
+		        Element element = (Element)nodes.item(i);
+				String className = element.getAttribute("class");
+				
+				if (classifiers.contains(className)) {
+					return false;
+				}
+				classifiers.add(className);
+		    }
+		    return true;
+	    } catch(Exception e) { return false; }
 	}
 	
 	public static String xmlToProcessName(String xml) throws ParserConfigurationException, SAXException, IOException {
