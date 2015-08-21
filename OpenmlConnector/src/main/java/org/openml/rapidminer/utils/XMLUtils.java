@@ -21,6 +21,7 @@ import org.openml.apiconnector.algorithms.Conversion;
 import org.openml.apiconnector.algorithms.Hashing;
 import org.openml.apiconnector.io.OpenmlConnector;
 import org.openml.apiconnector.xml.Implementation;
+import org.openml.apiconnector.xml.Implementation.Component;
 import org.openml.apiconnector.xml.Run;
 import org.openml.apiconnector.xml.Run.Parameter_setting;
 import org.w3c.dom.*;
@@ -127,7 +128,7 @@ public class XMLUtils {
 				String packageName = OperatorService.createOperator(className).getClass().getPackage().toString();
 				
 				if (packageName.contains(".learner.")) {
-					classifiers.add(className.replace(" ", ""));
+					classifiers.add(toOpenmlName(className));
 				}
 			} catch (OperatorCreationException e) {
 				Conversion.log( "Warning", "ProcessXMLToName", "Could not create operator: " + e.getMessage() );
@@ -205,7 +206,7 @@ public class XMLUtils {
 	        		// Don't add OpenML Package operators ... 
 	        		String operatorClass = ((Element) currentNode).getAttribute("class");
 	        		Operator operator = OperatorService.createOperator(operatorClass);
-	        		if( operator.getOperatorClassName().startsWith(illegalClassPrefix) == false ) { 
+	        		if( operatorClass.startsWith(illegalClassPrefix) == false ) { 
 		        		for (String parameterName : operator.getParameters()) {
 		        			ParameterType type = operator.getParameterType(parameterName);
 		        			
@@ -213,6 +214,12 @@ public class XMLUtils {
 		        		}
 	        		
 		        		subWorkflows.add(subflow);
+	        		} else {
+	        			if (subflow.getComponent() != null) {
+	        				for (Component c : subflow.getComponent()) {
+	        					subWorkflows.add(c.getImplementation());
+	        				}
+	        			}
 	        		}
 	        	}
 	        }
