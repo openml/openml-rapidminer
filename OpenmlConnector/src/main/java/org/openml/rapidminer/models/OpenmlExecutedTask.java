@@ -1,5 +1,9 @@
 package org.openml.rapidminer.models;
 
+import java.util.List;
+
+import org.openml.apiconnector.xml.EvaluationScore;
+
 import com.rapidminer.example.ExampleSet;
 import com.rapidminer.operator.AbstractIOObject;
 import com.rapidminer.operator.Annotations;
@@ -10,10 +14,12 @@ public class OpenmlExecutedTask extends AbstractIOObject {
 	
 	protected final int task_id;
 	protected final ExampleSet predictions;
+	protected final List<EvaluationScore> evaluationMeasures;
 	
-	public OpenmlExecutedTask(int task_id, ExampleSet predictions) {
+	public OpenmlExecutedTask(int task_id, ExampleSet predictions, List<EvaluationScore> evaluationMeasures) {
 		this.task_id = task_id;
 		this.predictions = predictions;
+		this.evaluationMeasures = evaluationMeasures;
 	}
 	
 	public int getTaskId() {
@@ -22,6 +28,10 @@ public class OpenmlExecutedTask extends AbstractIOObject {
 	
 	public ExampleSet getPredictions() {
 		return predictions;
+	}
+	
+	public List<EvaluationScore> getEvaluationMeasures() {
+		return evaluationMeasures;
 	}
 	
 	@Override

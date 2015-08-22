@@ -8,6 +8,7 @@ import java.util.Map;
 import org.openml.apiconnector.algorithms.Conversion;
 import org.openml.apiconnector.io.HttpConnector;
 import org.openml.apiconnector.io.OpenmlConnector;
+import org.openml.apiconnector.xml.EvaluationScore;
 import org.openml.apiconnector.xml.Implementation;
 import org.openml.apiconnector.xml.Run;
 import org.openml.apiconnector.xstream.XstreamXmlMapping;
@@ -73,11 +74,19 @@ public class UploadOpenmlTask extends Operator {
 			// TODO: make the user enter his other meta-data!
 			String processXml = XMLUtils.prepare(getProcess().getRootOperator().getXML(true));
 			Implementation workflow = XMLUtils.xmlToImplementation(processXml);
+
+			Conversion.log("OK","Upload Run", HttpConnector.xstreamClient.toXML(workflow));
 			
 			int implementation_id = ImplementationUtils.getImplementationId(workflow, processXml, openmlConnector);
 
 			// TODO: resolve parameter string
 			Run run = XMLUtils.xmlToRun(getProcess().getRootOperator().getXML(true), openmlConnector, implementation_id, oet.getTaskId(), TAGS); //new Run(oet.getTaskId(), null, implementation_id, "", null, TAGS);
+			for (EvaluationScore score : oet.getEvaluationMeasures()) {
+				run.addOutputEvaluation(score.getFunction(), score.getRepeat(), score.getFold(), score.getSample(), score.getImplementation(), Double.parseDouble(score.getValue()) );
+			}
+			
+			
+			Conversion.log("OK","Upload Run", HttpConnector.xstreamClient.toXML(run));
 			
 			Map<String,File> files = new HashMap<String, File>();
 			String taskName = "openml-task-" + oet.getTaskId() + "-predictions"; 

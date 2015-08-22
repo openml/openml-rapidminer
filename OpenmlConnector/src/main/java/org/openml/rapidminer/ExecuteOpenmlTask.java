@@ -1,12 +1,16 @@
 package org.openml.rapidminer;
 
 import java.io.BufferedReader;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.openml.apiconnector.algorithms.Conversion;
 import org.openml.apiconnector.algorithms.Input;
 import org.openml.apiconnector.algorithms.TaskInformation;
+import org.openml.apiconnector.xml.EvaluationScore;
 import org.openml.apiconnector.xml.Task.Input.Data_set;
 import org.openml.rapidminer.models.OpenmlExecutedTask;
 import org.openml.rapidminer.models.OpenmlTask;
@@ -44,11 +48,21 @@ public class ExecuteOpenmlTask extends OperatorChain {
     // output
 	protected OutputPort predictionSetOutput = getOutputPorts().createPort("prediction set");
 	
+	// misc
+    protected final boolean canMeasureCPUTime;
+    protected final ThreadMXBean thMonitor;
+	
 	public ExecuteOpenmlTask(OperatorDescription description) {
 		super(description, "Task Execution");
 		
 		getTransformer().addGenerationRule(predictionSetOutput, OpenmlExecutedTask.class);
 		getTransformer().addGenerationRule(trainingProcessExampleSetOutput, ExampleSet.class);
+		
+	    thMonitor = ManagementFactory.getThreadMXBean();
+	    canMeasureCPUTime = thMonitor.isThreadCpuTimeSupported();
+	    if (canMeasureCPUTime && !thMonitor.isThreadCpuTimeEnabled()) {
+	      thMonitor.setThreadCpuTimeEnabled(true);
+	    }
 	}
 	
 	@Override
@@ -57,9 +71,10 @@ public class ExecuteOpenmlTask extends OperatorChain {
 		//	Example example = exampleSet.getExample(0);
 			Conversion.log( "OK", "Processfile", getProcess().toString() );
 			OpenmlTask task = taskInput.getData(OpenmlTask.class);
-			ExampleSet predictions = executeOpenmlTask( task );
 			
-			predictionSetOutput.deliver(new OpenmlExecutedTask(task.getTask().getTask_id(), predictions));
+			OpenmlExecutedTask executedTask = executeOpenmlTask( task );
+			
+			predictionSetOutput.deliver(executedTask);
 		} catch( Exception e ) {
 			System.out.println("Exception: " + e.getMessage() );
 			e.printStackTrace();
@@ -67,9 +82,8 @@ public class ExecuteOpenmlTask extends OperatorChain {
 		}
 	}
 	
-	private ExampleSet executeOpenmlTask( OpenmlTask openmlTask ) throws Exception {
+	private OpenmlExecutedTask executeOpenmlTask( OpenmlTask openmlTask ) throws Exception {
 		// TODO: make it work for regression tasks
-		
 		Data_set sourceData = TaskInformation.getSourceData(openmlTask.getTask());
 		String splitsUrl = TaskInformation.getEstimationProcedure(openmlTask.getTask()).getData_splits_url();
 		
@@ -90,13 +104,20 @@ public class ExecuteOpenmlTask extends OperatorChain {
 		int samples = 1;
 		try { samples = TaskInformation.getNumberOfSamples(openmlTask.getTask()); } catch(Exception e) { }
 
+		List<EvaluationScore> evaluationMeasures = new ArrayList<EvaluationScore>();
 		List<Attribute> predictionSetAttributes = predictionSetAttributes(dataset.getAttributes().getLabel());
 		MemoryExampleTable table = new MemoryExampleTable(predictionSetAttributes);
 		
-		System.out.println(predictionSetAttributes);
 		for( int r = 0; r < repeats; ++r ) {
 			for( int f = 0; f < folds; ++f ) {
 				for( int s = 0; s < samples; ++s ) {
+					long threatID = Thread.currentThread().getId();
+					long trainCPUStartTime = -1;
+					Double trainCPUTimeElapsed = Double.NaN;
+					long testCPUStartTime = -1;
+					Double testCPUTimeElapsed = Double.NaN;
+					
+					
 					SplittedExampleSet splittedES = getSubsample(dataset, splits, r, f, s);
 					// 1 means training, 2 means testing
 					splittedES.selectSingleSubset(1);
@@ -108,11 +129,16 @@ public class ExecuteOpenmlTask extends OperatorChain {
 					
 					trainingProcessExampleSetOutput.deliver(trainingSet);
 					
+					if (canMeasureCPUTime) {trainCPUStartTime = thMonitor.getThreadUserTime(threatID);}
 					getSubprocess(0).execute();
+					if (canMeasureCPUTime) {trainCPUTimeElapsed = new Double((thMonitor.getThreadUserTime(threatID) - trainCPUStartTime) / 1000000.0);}
 					
 					Model model = trainingProcessModelInput.getData(Model.class);
 					
+
+					if (canMeasureCPUTime) {testCPUStartTime = thMonitor.getThreadUserTime(threatID);}
 					ExampleSet results = model.apply(testSet);
+					if (canMeasureCPUTime) {testCPUTimeElapsed = new Double((thMonitor.getThreadUserTime(threatID) - testCPUStartTime) / 1000000.0);}
 					
 					for(int i = 0; i < results.size(); ++i ) {
 						double[] data = new double[predictionSetAttributes.size()];
@@ -131,10 +157,45 @@ public class ExecuteOpenmlTask extends OperatorChain {
 						
 						table.addDataRow(new DoubleArrayDataRow(data));
 					}
+					
+					
+					if(canMeasureCPUTime) {
+						// TODO: revise mapping
+						Integer samplenr = s;
+						if (samples == 1) {
+							samplenr = null;
+						}
+						
+						EvaluationScore trainingTime = new EvaluationScore(
+							"openml.evaluation.usercpu_time_millis_training(1.0)",
+							"usercpu_time_millis_training",
+							trainCPUTimeElapsed + "", "", 
+							r, f, samplenr, trainingSet.size() );
+						
+						EvaluationScore testTime = new EvaluationScore(
+							"openml.evaluation.usercpu_time_millis_testing(1.0)",
+							"usercpu_time_millis_testing",
+							testCPUTimeElapsed + "", "", 
+							r, f, samplenr, trainingSet.size() ); // training set size = ok
+						
+						EvaluationScore totalTime = new EvaluationScore(
+							"openml.evaluation.usercpu_time_millis(1.0)",
+							"usercpu_time_millis",
+							(testCPUTimeElapsed + trainCPUTimeElapsed) + "", "", 
+							r, f, samplenr, trainingSet.size() ); // training set size = ok
+						
+						
+						
+						evaluationMeasures.add(trainingTime);
+						evaluationMeasures.add(testTime);
+						evaluationMeasures.add(totalTime);
+					}
 				}
 			}
 		}
-		return table.createExampleSet();
+		
+		OpenmlExecutedTask oet = new OpenmlExecutedTask(openmlTask.getTask().getTask_id(), table.createExampleSet(), evaluationMeasures);
+		return oet;
 	}
 	
 	private SplittedExampleSet getSubsample( ExampleSet dataset, ExampleSet splits, int repeat, int fold, int sample ) {
