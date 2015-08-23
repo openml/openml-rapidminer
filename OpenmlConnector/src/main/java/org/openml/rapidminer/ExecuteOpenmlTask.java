@@ -83,7 +83,6 @@ public class ExecuteOpenmlTask extends OperatorChain {
 	}
 	
 	private OpenmlExecutedTask executeOpenmlTask( OpenmlTask openmlTask ) throws Exception {
-		// TODO: make it work for regression tasks
 		Data_set sourceData = TaskInformation.getSourceData(openmlTask.getTask());
 		String splitsUrl = TaskInformation.getEstimationProcedure(openmlTask.getTask()).getData_splits_url();
 		
@@ -148,13 +147,15 @@ public class ExecuteOpenmlTask extends OperatorChain {
 						data[3] = results.getExample(i).getId();
 						data[4] = results.getExample(i).getValue(results.getAttributes().get("prediction"));
 						data[5] = results.getExample(i).getValue(results.getAttributes().getLabel());
-						int j = 5;
 						
-						List<String> values = dataset.getAttributes().getLabel().getMapping().getValues();
-						for(String value : values) {
-							data[++j] = results.getExample(i).getValue(results.getAttributes().get("confidence_"+value));;
+						if (dataset.getAttributes().getLabel().isNominal()) {
+							int j = 5;
+							
+							List<String> values = dataset.getAttributes().getLabel().getMapping().getValues();
+							for(String value : values) {
+								data[++j] = results.getExample(i).getValue(results.getAttributes().get("confidence_"+value));;
+							}
 						}
-						
 						table.addDataRow(new DoubleArrayDataRow(data));
 					}
 					
@@ -256,11 +257,12 @@ public class ExecuteOpenmlTask extends OperatorChain {
 		attributes.add(prediction);
 		attributes.add(correct);
 		
-		List<String> values = label.getMapping().getValues();
-		for(String value : values) {
-			attributes.add(AttributeFactory.createAttribute("confidence."+value, Ontology.NUMERICAL));
+		if (label.isNominal()) {
+			List<String> values = label.getMapping().getValues();
+			for(String value : values) {
+				attributes.add(AttributeFactory.createAttribute("confidence."+value, Ontology.NUMERICAL));
+			}
 		}
-		
 		return attributes;
 	}
 }
