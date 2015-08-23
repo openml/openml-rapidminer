@@ -153,7 +153,13 @@ public class ExecuteOpenmlTask extends OperatorChain {
 							
 							List<String> values = dataset.getAttributes().getLabel().getMapping().getValues();
 							for(String value : values) {
-								data[++j] = results.getExample(i).getValue(results.getAttributes().get("confidence_"+value));;
+								Double confidence = results.getExample(i).getValue(results.getAttributes().get("confidence_"+value));
+								if (confidence.isNaN()) {
+									data[++j] = 0;
+								} else {
+									data[++j] = confidence;
+								}
+								
 							}
 						}
 						table.addDataRow(new DoubleArrayDataRow(data));
@@ -211,8 +217,6 @@ public class ExecuteOpenmlTask extends OperatorChain {
 		Attribute attSample = attributes.get("sample");
 		Attribute attRowid = attributes.get("rowid");
 		Attribute attType = attributes.get("type");
-		
-		Conversion.log("OK", "getSubsample", attRepeat.getName() );
 		
 		for (int i = 0; i < splits.size(); ++i ) {
 			double instRepeat = splits.getExample(i).getValue(attRepeat);
