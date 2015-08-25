@@ -128,7 +128,7 @@ public class XMLUtils {
 				String packageName = OperatorService.createOperator(className).getClass().getPackage().toString();
 				
 				if (packageName.contains(".learner.")) {
-					classifiers.add(toOpenmlName(className));
+					classifiers.add(toOpenmlName(className, false));
 				}
 			} catch (OperatorCreationException e) {
 				Conversion.log( "Warning", "ProcessXMLToName", "Could not create operator: " + e.getMessage() );
@@ -171,7 +171,7 @@ public class XMLUtils {
 		String operatorClass = ((Element) node).getAttribute("class");
 		String operatorVersion = ((Element) node).getAttribute("compatibility");
 		
-		String operatorName = toOpenmlName(operatorClass);
+		String operatorName = toOpenmlName(operatorClass, true);
 		
 		Implementation current = new Implementation(operatorName, operatorVersion, "A RapidMiner Operator", "English", "RapidMiner_6.4.0");
 	    
@@ -241,11 +241,11 @@ public class XMLUtils {
 	    	Element parameter = (Element) nodes.item(i); 
 	    	Element operator = (Element) nodes.item(i).getParentNode();
 	    	if( operator.getAttribute("class").startsWith(illegalClassPrefix) == false ) { 
-		    	String flowName = toOpenmlName(operator.getAttribute("class"));
+		    	String flowName = toOpenmlName(operator.getAttribute("class"), true);
 		    	String flowVersion = operator.getAttribute("compatibility");
 		    	String paramKey = parameter.getAttribute("key");
 		    	String paramValue = parameter.getAttribute("value");
-		    	// TODO: we can do this in one api call to implementation.get (and store all ids of sub workflows)
+		    	// TODO: we can do this in *a single* api call to implementation.get (and store all ids of sub workflows)
 		    	Integer component = connector.implementationExists( flowName, flowVersion ).getId(); 
 		    	Parameter_setting ps = new Parameter_setting(component, paramKey, paramValue);
 		    	params.add(ps);
@@ -255,8 +255,11 @@ public class XMLUtils {
 		return run;
 	}
 	
-	private static String toOpenmlName(String rapidMinerName) {
-		String operatorName = "rm.operator." + Normalizer.normalize(rapidMinerName, Form.NFD);
+	private static String toOpenmlName(String rapidMinerName, boolean prefix) {
+		String strPrefix = prefix ? "rm.operator." : "";
+		
+		String operatorName = strPrefix + Normalizer.normalize(rapidMinerName, Form.NFD);
 		return operatorName.replaceAll("[^A-Za-z0-9_\\-\\.]", "");
 	}
+	
 }
