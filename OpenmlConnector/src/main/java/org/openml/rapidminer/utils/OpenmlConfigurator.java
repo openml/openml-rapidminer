@@ -7,7 +7,6 @@ import org.openml.apiconnector.settings.Settings;
 import org.openml.rapidminer.models.OpenmlConfigurable;
 
 import com.rapidminer.parameter.ParameterType;
-import com.rapidminer.parameter.ParameterTypePassword;
 import com.rapidminer.parameter.ParameterTypeString;
 import com.rapidminer.tools.config.Configurator;
 
@@ -16,8 +15,7 @@ public class OpenmlConfigurator extends Configurator<OpenmlConfigurable> {
 	public static final String TYPE_ID = "OpenmlConfig";
 	
 	public static final String PARAMETER_URL = "Url";
-	public static final String PARAMETER_USERNAME = "Username";
-	public static final String PARAMETER_PASSWORD = "Password";
+	public static final String PARAMETER_APIKEY = "Api key";
 	
 	@Override
 	public Class<OpenmlConfigurable> getConfigurableClass() {
@@ -28,8 +26,7 @@ public class OpenmlConfigurator extends Configurator<OpenmlConfigurable> {
 	public List<ParameterType> getParameterTypes() {
 		List<ParameterType> types = new ArrayList<ParameterType>();
 		types.add(new ParameterTypeString(PARAMETER_URL, "OpenML Url", Settings.BASE_URL));
-		types.add(new ParameterTypeString(PARAMETER_USERNAME, "OpenML username", false));
-		types.add(new ParameterTypePassword(PARAMETER_PASSWORD, "OpenML password"));
+		types.add(new ParameterTypeString(PARAMETER_APIKEY, "OpenML Api key", false));
 		
 		return types;
 	}

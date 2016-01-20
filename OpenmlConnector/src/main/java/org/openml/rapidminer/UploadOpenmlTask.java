@@ -9,7 +9,7 @@ import org.openml.apiconnector.algorithms.Conversion;
 import org.openml.apiconnector.io.HttpConnector;
 import org.openml.apiconnector.io.OpenmlConnector;
 import org.openml.apiconnector.xml.EvaluationScore;
-import org.openml.apiconnector.xml.Implementation;
+import org.openml.apiconnector.xml.Flow;
 import org.openml.apiconnector.xml.Run;
 import org.openml.apiconnector.xstream.XstreamXmlMapping;
 import org.openml.rapidminer.models.OpenmlConfigurable;
@@ -62,18 +62,17 @@ public class UploadOpenmlTask extends Operator {
 		} catch (ConfigurationException e) {
 			throw new UserError(this, e, "openml.configuration_read");
 		}
-		
-		String username = config.getUsername();
-		String password = config.getPassword();
+
+		String apikey = config.getApiKey();
 		String url = config.getUrl();
 		
-		openmlConnector = new OpenmlConnector(url,username,password);
+		openmlConnector = new OpenmlConnector(url,apikey);
 		HttpConnector.xstreamClient = XstreamXmlMapping.getInstance(new ClassLoaderReference(Plugin.getMajorClassLoader()));
 		
 		try {
 			// TODO: make the user enter his other meta-data!
 			String processXml = XMLUtils.prepare(getProcess().getRootOperator().getXML(true));
-			Implementation workflow = XMLUtils.xmlToImplementation(processXml);
+			Flow workflow = XMLUtils.xmlToImplementation(processXml);
 
 			Conversion.log("OK","Upload Run", HttpConnector.xstreamClient.toXML(workflow));
 			
@@ -82,7 +81,7 @@ public class UploadOpenmlTask extends Operator {
 			// TODO: resolve parameter string
 			Run run = XMLUtils.xmlToRun(getProcess().getRootOperator().getXML(true), openmlConnector, implementation_id, oet.getTaskId(), TAGS); //new Run(oet.getTaskId(), null, implementation_id, "", null, TAGS);
 			for (EvaluationScore score : oet.getEvaluationMeasures()) {
-				run.addOutputEvaluation(score.getFunction(), score.getRepeat(), score.getFold(), score.getSample(), score.getImplementation(), Double.parseDouble(score.getValue()) );
+				run.addOutputEvaluation(score.getFunction(), score.getRepeat(), score.getFold(), score.getSample(), score.getFlow(), Double.parseDouble(score.getValue()) );
 			}
 			
 			

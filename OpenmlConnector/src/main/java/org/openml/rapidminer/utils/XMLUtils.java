@@ -20,8 +20,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.openml.apiconnector.algorithms.Conversion;
 import org.openml.apiconnector.algorithms.Hashing;
 import org.openml.apiconnector.io.OpenmlConnector;
-import org.openml.apiconnector.xml.Implementation;
-import org.openml.apiconnector.xml.Implementation.Component;
+import org.openml.apiconnector.xml.Flow;
+import org.openml.apiconnector.xml.Flow.Component;
 import org.openml.apiconnector.xml.Run;
 import org.openml.apiconnector.xml.Run.Parameter_setting;
 import org.w3c.dom.*;
@@ -151,7 +151,7 @@ public class XMLUtils {
 	}
 	
 
-	public static Implementation xmlToImplementation(String xml)
+	public static Flow xmlToImplementation(String xml)
 			throws ParserConfigurationException, SAXException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, ClassCastException, NoSuchAlgorithmException, OperatorCreationException {
 		InputStream is = new ByteArrayInputStream(xml.getBytes());
 		DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -159,7 +159,7 @@ public class XMLUtils {
 		Document document = docBuilder.parse(is);
 		
 		
-		Implementation workflow = processOperator(document.getElementsByTagName("operator").item(0), 0);
+		Flow workflow = processOperator(document.getElementsByTagName("operator").item(0), 0);
 		
 		workflow.setName(xmlToProcessName(document));
 		workflow.setExternal_version(Hashing.md5(xml));
@@ -167,13 +167,13 @@ public class XMLUtils {
 		return workflow;
 	}
 	
-	private static Implementation processOperator(Node node, int depth) throws ParserConfigurationException, SAXException, IOException, OperatorCreationException {
+	private static Flow processOperator(Node node, int depth) throws ParserConfigurationException, SAXException, IOException, OperatorCreationException {
 		String operatorClass = ((Element) node).getAttribute("class");
 		String operatorVersion = ((Element) node).getAttribute("compatibility");
 		
 		String operatorName = toOpenmlName(operatorClass, true);
 		
-		Implementation current = new Implementation(operatorName, operatorVersion, "A RapidMiner Operator", "English", "RapidMiner_6.4.0");
+		Flow current = new Flow(operatorName, operatorVersion, "A RapidMiner Operator", "English", "RapidMiner_6.4.0");
 	    
 	    NodeList nodeList = node.getChildNodes();
 	    for (int i = 0; i < nodeList.getLength(); i++) {
@@ -181,9 +181,9 @@ public class XMLUtils {
 	        if (currentNode.getNodeType() == Node.ELEMENT_NODE) {
 	            //calls this method for all the children which is Element
 	        	if (currentNode.getNodeName().equals("process")) {
-	        		List<Implementation> subworkflows = processProcess(currentNode, depth);
+	        		List<Flow> subworkflows = processProcess(currentNode, depth);
 	        		
-	        		for (Implementation subworkflow : subworkflows) {
+	        		for (Flow subworkflow : subworkflows) {
 	        			current.addComponent("sub", subworkflow, false);
 	        		}
 	        	}
@@ -192,8 +192,8 @@ public class XMLUtils {
 	    return current;
 	}
 	
-	private static List<Implementation> processProcess(Node node, int depth) throws ParserConfigurationException, SAXException, IOException, OperatorCreationException {
-		List<Implementation> subWorkflows = new ArrayList<Implementation>();
+	private static List<Flow> processProcess(Node node, int depth) throws ParserConfigurationException, SAXException, IOException, OperatorCreationException {
+		List<Flow> subWorkflows = new ArrayList<Flow>();
 		
 	    NodeList nodeList = node.getChildNodes();
 	    for (int i = 0; i < nodeList.getLength(); i++) {
@@ -201,7 +201,7 @@ public class XMLUtils {
 	        if (currentNode.getNodeType() == Node.ELEMENT_NODE) {
 	            //calls this method for all the children which is Element
 	        	if (currentNode.getNodeName().equals("operator")) {
-	        		Implementation subflow = processOperator(currentNode, depth+1);
+	        		Flow subflow = processOperator(currentNode, depth+1);
 	        		
 	        		// Don't add OpenML Package operators ... 
 	        		String operatorClass = ((Element) currentNode).getAttribute("class");
@@ -246,7 +246,7 @@ public class XMLUtils {
 		    	String paramKey = parameter.getAttribute("key");
 		    	String paramValue = parameter.getAttribute("value");
 		    	// TODO: we can do this in *a single* api call to implementation.get (and store all ids of sub workflows)
-		    	Integer component = connector.implementationExists( flowName, flowVersion ).getId(); 
+		    	Integer component = connector.flowExists( flowName, flowVersion ).getId(); 
 		    	Parameter_setting ps = new Parameter_setting(component, paramKey, paramValue);
 		    	params.add(ps);
 	    	}

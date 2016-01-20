@@ -58,11 +58,10 @@ public class DownloadOpenmlTask extends Operator {
 
 		try { task_id  = getParameterAsInt(PARAMETER_TASKID);      } catch(UndefinedParameterError eupe ) { Conversion.log("Error","Parameter","Can't find parameter: " + PARAMETER_TASKID );}
 		
-		String username = config.getUsername();
-		String password = config.getPassword();
+		String apikey = config.getApiKey();
 		String url = config.getUrl();
 		
-		openmlConnector = new OpenmlConnector(url,username,password);
+		openmlConnector = new OpenmlConnector(url,apikey);
 		HttpConnector.xstreamClient = XstreamXmlMapping.getInstance(new ClassLoaderReference(Plugin.getMajorClassLoader()));
 		
 		Task task = null;
@@ -71,7 +70,7 @@ public class DownloadOpenmlTask extends Operator {
 		try {
 			task = openmlConnector.taskGet(task_id);
 			Data_set sourceData = TaskInformation.getSourceData(task);
-			dsd = openmlConnector.dataDescription(sourceData.getData_set_id());
+			dsd = openmlConnector.dataGet(sourceData.getData_set_id());
 		} catch (Exception e) {
 			throw new OperatorException("Error retrieving task from Openml: " + e.getMessage());
 		}

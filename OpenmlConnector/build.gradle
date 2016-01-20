@@ -55,7 +55,7 @@ extensionConfig {
 
 // Define third party library dependencies
 dependencies {
-  compile 'org.openml:apiconnector:1.0.6'
+  compile 'org.openml:apiconnector:1.0.9'
   compile 'nz.ac.waikato.cms.weka:weka-dev:3.7.12'
   
   // VLDocking as docking framework (https://code.google.com/p/vldocking/)

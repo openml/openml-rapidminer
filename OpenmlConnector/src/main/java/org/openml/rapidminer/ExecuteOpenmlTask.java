@@ -3,6 +3,7 @@ package org.openml.rapidminer;
 import java.io.BufferedReader;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -87,7 +88,7 @@ public class ExecuteOpenmlTask extends OperatorChain {
 		String splitsUrl = TaskInformation.getEstimationProcedure(openmlTask.getTask()).getData_splits_url();
 		
 		// TODO: update dependency correctly!
-		Instances datasetOriginal = new Instances( new BufferedReader( Input.getURL( openmlTask.getDatasetDescription().getUrl() ) ) );
+		Instances datasetOriginal = new Instances( new BufferedReader( Input.getURL( new URL(openmlTask.getDatasetDescription().getUrl() ) ) ) );
 		datasetOriginal.insertAttributeAt(new weka.core.Attribute("rapidminer_row_id"), 0);
 		for(int i = 0; i < datasetOriginal.size(); ++i) {
 			datasetOriginal.get(i).setValue(0, i);
@@ -96,7 +97,7 @@ public class ExecuteOpenmlTask extends OperatorChain {
 		ExampleSet dataset = WekaTools.toRapidMinerExampleSet( datasetOriginal );
 		dataset.getAttributes().setLabel(dataset.getAttributes().get(sourceData.getTarget_feature()));
 		dataset.getAttributes().setId(dataset.getAttributes().get("rapidminer_row_id"));
-		ExampleSet splits = WekaTools.toRapidMinerExampleSet( new Instances( new BufferedReader( Input.getURL( splitsUrl ) ) ) );
+		ExampleSet splits = WekaTools.toRapidMinerExampleSet( new Instances( new BufferedReader( Input.getURL( new URL(splitsUrl) ) ) ) );
 		
 		int repeats = TaskInformation.getNumberOfRepeats(openmlTask.getTask());
 		int folds = TaskInformation.getNumberOfFolds(openmlTask.getTask());
