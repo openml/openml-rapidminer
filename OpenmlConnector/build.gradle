@@ -1,63 +1,58 @@
-plugins {
-  id 'com.rapidminer.extension' version '0.6.2'
+buildscript {
+	repositories {
+	    jcenter()
+		maven { url 'https://maven.rapidminer.com/content/groups/public/' }
+	}
 }
 
-apply plugin: 'com.rapidminer.extension'
+plugins { id 'com.rapidminer.extension' version '0.9.2' }
 
 // Define Maven artifact repositories
 repositories {
-  jcenter()
-  maven { 
-    url 'https://dl.bintray.com/rapidminer/public/' 
-  }
-  maven { 
-    url 'https://dl.bintray.com/rapidminer/open-source/' 
-  }
+    jcenter()
+	maven { url 'https://maven.rapidminer.com/content/groups/public/' }
 }
 
 extensionConfig {
-  name 'OpenmlConnector'
 
-  /*
-   * The artefact group which will be used when publishing the extensions Jar.
-   * By default it is 'com.rapidminer.extension'.
-   */
-  groupId = 'org.openml.rapidminer'
+    // The extension name
+    name 'OpenmlConnector'
 
-  /*
-   * The extension vendor which will be displayed in the extensions about box.
-   * By default it is 'RapidMiner GmbH'.
-   */
-  vendor = "OpenML.org"
+    /*
+     * The artifact group which will be used when publishing the extensions Jar
+     * and for package customization when initializing the project repository.
+     *
+     * It is 'com.rapidminer.extension' by default.
+     */
+    groupId = 'org.openml.rapidminer'
 
-  /*
-   * The vendor homepage which will be displayed in the extensions about box.
-   * By default it is 'www.rapidminer.com'.
-   */
-  homepage = "http://www.openml.org/"
+    /*
+     * The extension vendor which will be displayed in the extensions about box
+     * and for customizing the license headers when initializing the project repository.
+     *
+     * It is 'RapidMiner GmbH' by default.
+     */
+    vendor = "OpenML.org"
 
-  /*
-   * The relative path to RapidMiner Studio. It will be used by the
-   * 'installExtension' task to copy the extension Jar to $rapidminerHome/lib/plugins/ 
-   */
-  rapidminerHome = '../../../apps/rapidminer-studio'
+    /*
+     * The vendor homepage which will be displayed in the extensions about box
+     * and for customizing the license headers when initializing the project repository.
+     *
+     * It is 'www.rapidminer.com' by default.
+     */
+    homepage = "http://www.openml.org/"
 
-  // define RapidMiner version and extension dependencies
-  dependencies {
-    rapidminer '5.3.0'
-    
-    // Only needed for version 5.3.0
-    useAntArtifact true
-
-    //extension namespace: 'text', version: '6.1.0'
-  }
+    // define RapidMiner version and extension dependencies
+    dependencies {
+        rapidminer '7.4.0'
+        //extension namespace: 'text', version: '7.4.1'
+    }
 }
 
 // Define third party library dependencies
 dependencies {
-  compile 'org.openml:apiconnector:1.0.9'
-  compile 'nz.ac.waikato.cms.weka:weka-dev:3.7.12'
-  
-  // VLDocking as docking framework (https://code.google.com/p/vldocking/)
-  provided 'com.rapidminer.external:vldocking:1.0.0'
+
+	compile fileTree(dir: 'libs', include: '*.jar')
+    compile 'nz.ac.waikato.cms.weka:weka-dev:3.9.1'
+	//compile 'com.google.guava:guava:18.0'
 }

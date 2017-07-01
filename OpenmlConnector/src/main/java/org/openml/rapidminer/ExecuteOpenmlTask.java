@@ -79,7 +79,7 @@ public class ExecuteOpenmlTask extends OperatorChain {
 		} catch( Exception e ) {
 			System.out.println("Exception: " + e.getMessage() );
 			e.printStackTrace();
-			throw new OperatorException(e.getMessage());
+			throw new OperatorException(e.getMessage() + " " + org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
 		}
 	}
 	
@@ -175,19 +175,16 @@ public class ExecuteOpenmlTask extends OperatorChain {
 						}
 						
 						EvaluationScore trainingTime = new EvaluationScore(
-							"openml.evaluation.usercpu_time_millis_training(1.0)",
 							"usercpu_time_millis_training",
 							trainCPUTimeElapsed + "", "", 
 							r, f, samplenr, trainingSet.size() );
 						
 						EvaluationScore testTime = new EvaluationScore(
-							"openml.evaluation.usercpu_time_millis_testing(1.0)",
 							"usercpu_time_millis_testing",
 							testCPUTimeElapsed + "", "", 
 							r, f, samplenr, trainingSet.size() ); // training set size = ok
 						
 						EvaluationScore totalTime = new EvaluationScore(
-							"openml.evaluation.usercpu_time_millis(1.0)",
 							"usercpu_time_millis",
 							(testCPUTimeElapsed + trainCPUTimeElapsed) + "", "", 
 							r, f, samplenr, trainingSet.size() ); // training set size = ok

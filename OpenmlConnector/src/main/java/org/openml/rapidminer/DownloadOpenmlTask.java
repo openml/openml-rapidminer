@@ -4,15 +4,13 @@ import java.util.List;
 
 import org.openml.apiconnector.algorithms.Conversion;
 import org.openml.apiconnector.algorithms.TaskInformation;
-import org.openml.apiconnector.io.HttpConnector;
-import org.openml.apiconnector.io.OpenmlConnector;
 import org.openml.apiconnector.xml.DataSetDescription;
 import org.openml.apiconnector.xml.Task;
 import org.openml.apiconnector.xml.Task.Input.Data_set;
-import org.openml.apiconnector.xstream.XstreamXmlMapping;
 import org.openml.rapidminer.models.OpenmlConfigurable;
 import org.openml.rapidminer.models.OpenmlTask;
 import org.openml.rapidminer.utils.OpenmlConfigurator;
+import org.openml.rapidminer.utils.OpenmlConnectorJson;
 
 import com.rapidminer.operator.Operator;
 import com.rapidminer.operator.OperatorDescription;
@@ -25,18 +23,15 @@ import com.rapidminer.parameter.UndefinedParameterError;
 import com.rapidminer.tools.config.ConfigurationException;
 import com.rapidminer.tools.config.ConfigurationManager;
 import com.rapidminer.tools.config.ParameterTypeConfigurable;
-import com.rapidminer.tools.plugin.Plugin;
-import com.thoughtworks.xstream.core.ClassLoaderReference;
-
 public class DownloadOpenmlTask extends Operator {
 
-	private OpenmlConnector openmlConnector;
+	private OpenmlConnectorJson openmlConnector;
 	
 	private static String PARAMETER_TASKID = "Task id";
 	private static String PARAMETER_CONFIG = "OpenML Connection";
 	
 	private OutputPort taskOutput = getOutputPorts().createPort("task");
-	
+
 	public DownloadOpenmlTask(OperatorDescription description) {
 		super(description);
 		
@@ -61,18 +56,19 @@ public class DownloadOpenmlTask extends Operator {
 		String apikey = config.getApiKey();
 		String url = config.getUrl();
 		
-		openmlConnector = new OpenmlConnector(url,apikey);
-		HttpConnector.xstreamClient = XstreamXmlMapping.getInstance(new ClassLoaderReference(Plugin.getMajorClassLoader()));
+		openmlConnector = new OpenmlConnectorJson(url, apikey, true);
 		
 		Task task = null;
 		DataSetDescription dsd = null;
 		
-		try {
+		try 
+		{
 			task = openmlConnector.taskGet(task_id);
 			Data_set sourceData = TaskInformation.getSourceData(task);
 			dsd = openmlConnector.dataGet(sourceData.getData_set_id());
-		} catch (Exception e) {
-			throw new OperatorException("Error retrieving task from Openml: " + e.getMessage());
+		} 
+		catch (Exception e) {
+			throw new OperatorException("Error retrieving task from Openml: " + e.getMessage() + " " + org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
 		}
 
 		OpenmlTask openmltask = new OpenmlTask(task,dsd);
