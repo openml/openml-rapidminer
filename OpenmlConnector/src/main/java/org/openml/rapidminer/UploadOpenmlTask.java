@@ -6,16 +6,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.openml.apiconnector.algorithms.Conversion;
-import org.openml.apiconnector.io.HttpConnector;
-import org.openml.apiconnector.io.OpenmlConnector;
 import org.openml.apiconnector.xml.EvaluationScore;
 import org.openml.apiconnector.xml.Flow;
 import org.openml.apiconnector.xml.Run;
-import org.openml.apiconnector.xstream.XstreamXmlMapping;
 import org.openml.rapidminer.models.OpenmlConfigurable;
 import org.openml.rapidminer.models.OpenmlExecutedTask;
 import org.openml.rapidminer.utils.ImplementationUtils;
 import org.openml.rapidminer.utils.OpenmlConfigurator;
+import org.openml.rapidminer.utils.OpenmlConnectorJson;
 import org.openml.rapidminer.utils.XMLUtils;
 
 import com.rapidminer.operator.Operator;
@@ -29,15 +27,13 @@ import com.rapidminer.tools.WekaTools;
 import com.rapidminer.tools.config.ConfigurationException;
 import com.rapidminer.tools.config.ConfigurationManager;
 import com.rapidminer.tools.config.ParameterTypeConfigurable;
-import com.rapidminer.tools.plugin.Plugin;
-import com.thoughtworks.xstream.core.ClassLoaderReference;
 
 public class UploadOpenmlTask extends Operator {
 
 	private static String PARAMETER_CONFIG = "OpenML Connection";
 	private static final String[] TAGS = {"RapidMiner"};
 	
-	private OpenmlConnector openmlConnector;
+	private OpenmlConnectorJson openmlConnector;
 
 	
 	private InputPort predictionsInput = getInputPorts().createPort("predictions",OpenmlExecutedTask.class);
@@ -66,26 +62,25 @@ public class UploadOpenmlTask extends Operator {
 		String apikey = config.getApiKey();
 		String url = config.getUrl();
 		
-		openmlConnector = new OpenmlConnector(url,apikey);
-		HttpConnector.xstreamClient = XstreamXmlMapping.getInstance(new ClassLoaderReference(Plugin.getMajorClassLoader()));
+		openmlConnector = new OpenmlConnectorJson(url, apikey, true);
 		
 		try {
 			// TODO: make the user enter his other meta-data!
 			String processXml = XMLUtils.prepare(getProcess().getRootOperator().getXML(true));
 			Flow workflow = XMLUtils.xmlToImplementation(processXml);
-
-			Conversion.log("OK","Upload Run", HttpConnector.xstreamClient.toXML(workflow));
+			
+			//Conversion.log("OK","Upload Run", XMLUtils.flowToXml(workflow, null, null));
 			
 			int implementation_id = ImplementationUtils.getImplementationId(workflow, processXml, openmlConnector);
 
 			// TODO: resolve parameter string
 			Run run = XMLUtils.xmlToRun(getProcess().getRootOperator().getXML(true), openmlConnector, implementation_id, oet.getTaskId(), TAGS); //new Run(oet.getTaskId(), null, implementation_id, "", null, TAGS);
 			for (EvaluationScore score : oet.getEvaluationMeasures()) {
-				run.addOutputEvaluation(score.getFunction(), score.getRepeat(), score.getFold(), score.getSample(), score.getFlow(), Double.parseDouble(score.getValue()) );
+				run.addOutputEvaluation(score);
 			}
 			
 			
-			Conversion.log("OK","Upload Run", HttpConnector.xstreamClient.toXML(run));
+			//Conversion.log("OK","Upload Run", XMLUtils.runToXml(run));
 			
 			Map<String,File> files = new HashMap<String, File>();
 			String taskName = "openml-task-" + oet.getTaskId() + "-predictions"; 
@@ -93,10 +88,10 @@ public class UploadOpenmlTask extends Operator {
 			File predictionArff = Conversion.stringToTempFile(WekaTools.toWekaInstances(oet.getPredictions(), taskName , WekaInstancesAdaptor.CLUSTERING).toString(), taskName, "arff");
 			files.put("predictions", predictionArff);
 			
-			openmlConnector.runUpload(Conversion.stringToTempFile(HttpConnector.xstreamClient.toXML(run), "RapidMinerExecutedRun", "xml"), files);
+			openmlConnector.runUpload(XMLUtils.runToXml(run), files);
 		} catch(Exception e) {
 			e.printStackTrace();
-			throw new OperatorException("Error uploading task to Openml: " + e.getMessage());
+			throw new OperatorException("Error uploading task to Openml: " + e.getMessage() + " " + org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
 		}
 	}
 	
