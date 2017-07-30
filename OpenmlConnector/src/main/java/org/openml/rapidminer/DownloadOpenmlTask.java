@@ -12,6 +12,7 @@ import org.openml.rapidminer.models.OpenmlTask;
 import org.openml.rapidminer.utils.OpenmlConfigurator;
 import org.openml.rapidminer.utils.OpenmlConnectorJson;
 
+import com.rapidminer.MacroHandler;
 import com.rapidminer.operator.Operator;
 import com.rapidminer.operator.OperatorDescription;
 import com.rapidminer.operator.OperatorException;
@@ -42,25 +43,54 @@ public class DownloadOpenmlTask extends Operator {
 	public void doWork() throws OperatorException {
 		int task_id = -1;
 		OpenmlConfigurable config;
-		
-		try {
-			config = (OpenmlConfigurable) ConfigurationManager.getInstance().lookup(
-					OpenmlConfigurator.TYPE_ID, getParameterAsString(PARAMETER_CONFIG),
-					getProcess().getRepositoryAccessor());
-		} catch (ConfigurationException e) {
-			throw new UserError(this, e, "openml.configuration_read");
+		String apikey;
+		String url;
+		MacroHandler mHandler = this.getProcess().getMacroHandler();
+		// if a macro is set for apikey and url, get the values from there
+		if(mHandler.getMacro("apikey")!= null && mHandler.getMacro("url")!= null)
+		{
+			apikey = mHandler.getMacro("apikey");
+			url = mHandler.getMacro("url");
 		}
-
-		try { task_id  = getParameterAsInt(PARAMETER_TASKID);      } catch(UndefinedParameterError eupe ) { Conversion.log("Error","Parameter","Can't find parameter: " + PARAMETER_TASKID );}
-		
-		String apikey = config.getApiKey();
-		String url = config.getUrl();
-		
+		else if(this.isParameterSet("Url") && this.isParameterSet("Api key"))
+		{
+			url = this.getParameter("Url");
+			apikey = this.getParameter("Api key");
+		}
+		else
+		{
+			try 
+			{
+				config = (OpenmlConfigurable) ConfigurationManager.getInstance().lookup(
+				OpenmlConfigurator.TYPE_ID, getParameterAsString(PARAMETER_CONFIG), 
+				getProcess().getRepositoryAccessor());
+				apikey = config.getApiKey();
+				url = config.getUrl();
+			} 
+			catch (ConfigurationException e) 
+			{
+				throw new UserError(this, e, "openml.configuration_read");
+			}
+		}
+		// if there is a macro set for task_id, get the value from the macro
+		if(mHandler.getMacro("task_id")!= null)
+		{
+			task_id = Integer.parseInt(mHandler.getMacro("task_id"));
+		}
+		else
+		{
+			try 
+			{ 
+				task_id  = getParameterAsInt(PARAMETER_TASKID);      
+			} 
+			catch(UndefinedParameterError eupe ) 
+			{ 
+				Conversion.log("Error","Parameter","Can't find parameter: " + PARAMETER_TASKID );
+			}
+		}
 		openmlConnector = new OpenmlConnectorJson(url, apikey, true);
-		
 		Task task = null;
 		DataSetDescription dsd = null;
-		
 		try 
 		{
 			task = openmlConnector.taskGet(task_id);

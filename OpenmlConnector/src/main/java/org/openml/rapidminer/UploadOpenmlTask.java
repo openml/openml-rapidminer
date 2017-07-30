@@ -16,6 +16,7 @@ import org.openml.rapidminer.utils.OpenmlConfigurator;
 import org.openml.rapidminer.utils.OpenmlConnectorJson;
 import org.openml.rapidminer.utils.XMLUtils;
 
+import com.rapidminer.MacroHandler;
 import com.rapidminer.operator.Operator;
 import com.rapidminer.operator.OperatorDescription;
 import com.rapidminer.operator.OperatorException;
@@ -34,8 +35,6 @@ public class UploadOpenmlTask extends Operator {
 	private static final String[] TAGS = {"RapidMiner"};
 	
 	private OpenmlConnectorJson openmlConnector;
-
-	
 	private InputPort predictionsInput = getInputPorts().createPort("predictions",OpenmlExecutedTask.class);
 	
 	public UploadOpenmlTask(OperatorDescription description) {
@@ -50,19 +49,34 @@ public class UploadOpenmlTask extends Operator {
 		
 		OpenmlExecutedTask oet = predictionsInput.getData(OpenmlExecutedTask.class);
 		OpenmlConfigurable config;
-		
-		try {
-			config = (OpenmlConfigurable) ConfigurationManager.getInstance().lookup(
-					OpenmlConfigurator.TYPE_ID, getParameterAsString(PARAMETER_CONFIG),
-					getProcess().getRepositoryAccessor());
-		} catch (ConfigurationException e) {
-			throw new UserError(this, e, "openml.configuration_read");
+		String apikey;
+		String url;
+		MacroHandler mHandler = this.getProcess().getMacroHandler();
+		if(mHandler.getMacro("apikey")!= null && mHandler.getMacro("url")!= null)
+		{
+			apikey = mHandler.getMacro("apikey");
+			url = mHandler.getMacro("url");
 		}
-
-		String apikey = config.getApiKey();
-		String url = config.getUrl();
-		
-		openmlConnector = new OpenmlConnectorJson(url, apikey, true);
+		else if(this.isParameterSet("Url") && this.isParameterSet("Api key"))
+		{
+			url = this.getParameter("Url");
+			apikey = this.getParameter("Api key");
+		}
+		else
+		{
+			try 
+			{
+				config = (OpenmlConfigurable) ConfigurationManager.getInstance().lookup(
+				OpenmlConfigurator.TYPE_ID, getParameterAsString(PARAMETER_CONFIG), 
+				getProcess().getRepositoryAccessor());
+				apikey = config.getApiKey();
+				url = config.getUrl();
+			} 
+			catch (ConfigurationException e) 
+			{
+				throw new UserError(this, e, "openml.configuration_read");
+			}
+		}		openmlConnector = new OpenmlConnectorJson(url, apikey, true);
 		
 		try {
 			// TODO: make the user enter his other meta-data!

@@ -6,11 +6,12 @@ import java.util.List;
 import org.openml.apiconnector.settings.Settings;
 import org.openml.rapidminer.models.OpenmlConfigurable;
 
+import com.rapidminer.parameter.ParameterHandler;
 import com.rapidminer.parameter.ParameterType;
 import com.rapidminer.parameter.ParameterTypeString;
-import com.rapidminer.tools.config.Configurator;
+import com.rapidminer.tools.config.AbstractConfigurator;
 
-public class OpenmlConfigurator extends Configurator<OpenmlConfigurable> {
+public class OpenmlConfigurator extends AbstractConfigurator<OpenmlConfigurable> {
 
 	public static final String TYPE_ID = "OpenmlConfig";
 	
@@ -23,7 +24,7 @@ public class OpenmlConfigurator extends Configurator<OpenmlConfigurable> {
 	}
 
 	@Override
-	public List<ParameterType> getParameterTypes() {
+	public List<ParameterType> getParameterTypes(ParameterHandler pamHandler) {
 		List<ParameterType> types = new ArrayList<ParameterType>();
 		types.add(new ParameterTypeString(PARAMETER_URL, "OpenML Url", Settings.BASE_URL));
 		types.add(new ParameterTypeString(PARAMETER_APIKEY, "OpenML Api key", false));
