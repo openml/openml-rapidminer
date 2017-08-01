@@ -1,7 +1,6 @@
 package org.openml.experiment.operators;
 
 import org.openml.apiconnector.settings.Config;
-import org.openml.experiment.Logger;
 
 import com.rapidminer.operator.Operator;
 
@@ -12,12 +11,11 @@ public class Upload
 {
 	private Operator operator;
 	
-	public Upload(Operator operator, Config config)
+	public Upload(Operator operator, Config config) throws Exception
 	{
 		if(operator == null)
 		{
-			Logger.getInstance().logToFile("The operator reference given to Download is null");
-			System.exit(-1);
+			throw new Exception("The operator reference given to Download is null");
 		}
 		this.operator = operator;
 		setUrl(config.getServer());

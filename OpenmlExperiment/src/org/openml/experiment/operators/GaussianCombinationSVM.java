@@ -2,7 +2,6 @@ package org.openml.experiment.operators;
 
 import java.util.List;
 
-import org.openml.experiment.Logger;
 
 import com.rapidminer.operator.Operator;
 /*
@@ -10,13 +9,12 @@ import com.rapidminer.operator.Operator;
  */
 public class GaussianCombinationSVM extends DotSVM
 {
-	public GaussianCombinationSVM(List<String> args, Operator operator)
+	public GaussianCombinationSVM(List<String> args, Operator operator) throws Exception
 	{
 		super(args, operator);
 		if(args.size() != 11)
 		{
-			Logger.getInstance().logToFile("Not enough arguments for the GaussianCombinationSVM");
-			System.exit(-1);
+			throw new Exception("Not enough arguments for the GaussianCombinationSVM");
 		}
 		setKernelSigma1(args.get(8));
 		setKernelSigma2(args.get(9));

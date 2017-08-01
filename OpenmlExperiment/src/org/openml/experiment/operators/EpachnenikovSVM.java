@@ -2,21 +2,18 @@ package org.openml.experiment.operators;
 
 import java.util.List;
 
-import org.openml.experiment.Logger;
-
 import com.rapidminer.operator.Operator;
 /*
  * Wrapper for the SVM with the epachnenikov kernel type
  */
 public class EpachnenikovSVM extends DotSVM
 {
-	public EpachnenikovSVM(List<String> args, Operator operator)
+	public EpachnenikovSVM(List<String> args, Operator operator) throws Exception
 	{
 		super(args, operator);
 		if(args.size() != 10)
 		{
-			Logger.getInstance().logToFile("Not enough arguments for the EpachnenikovSVM");
-			System.exit(-1);
+			throw new Exception("Not enough arguments for the EpachnenikovSVM");
 		}
 		setKernelSigma1(args.get(8));
 		setKernelDegree(args.get(9));

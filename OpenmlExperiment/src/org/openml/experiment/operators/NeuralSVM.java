@@ -2,8 +2,6 @@ package org.openml.experiment.operators;
 
 import java.util.List;
 
-import org.openml.experiment.Logger;
-
 import com.rapidminer.operator.Operator;
 
 /*
@@ -11,13 +9,12 @@ import com.rapidminer.operator.Operator;
  */
 public class NeuralSVM extends DotSVM
 {
-	public NeuralSVM(List<String> args, Operator operator)
+	public NeuralSVM(List<String> args, Operator operator) throws Exception
 	{
 		super(args, operator);
 		if(args.size() != 10)
 		{
-			Logger.getInstance().logToFile("Not enough arguments for the NeuralSVM");
-			System.exit(-1);
+			throw new Exception("Not enough arguments for the NeuralSVM");
 		}
 		setKernelA(args.get(8));
 		setKernelB(args.get(9));

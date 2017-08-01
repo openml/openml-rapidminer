@@ -2,8 +2,6 @@ package org.openml.experiment.operators;
 
 import java.util.List;
 
-import org.openml.experiment.Logger;
-
 import com.rapidminer.operator.Operator;
 
 /*
@@ -11,13 +9,12 @@ import com.rapidminer.operator.Operator;
  */
 public class AnovaSVM extends DotSVM
 {
-	public AnovaSVM(List<String> args, Operator operator)
+	public AnovaSVM(List<String> args, Operator operator) throws Exception
 	{
 		super(args, operator);
 		if(args.size() != 10)
 		{
-			Logger.getInstance().logToFile("Not enough arguments for the RadialSVM");
-			System.exit(-1);
+			throw new Exception("Not enough arguments for the RadialSVM");
 		}
 		setKernelGamma(args.get(8));
 		setKernelDegree(args.get(9));

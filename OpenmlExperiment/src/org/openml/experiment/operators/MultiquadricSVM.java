@@ -2,22 +2,19 @@ package org.openml.experiment.operators;
 
 import java.util.List;
 
-import org.openml.experiment.Logger;
-
 import com.rapidminer.operator.Operator;
 
 /*
  * Wrapper for the SVM with the multiquadric kernel type
  */
-public class MultiquadricSVM extends DotSVM
+public class MultiquadricSVM extends DotSVM 
 {
-	public MultiquadricSVM(List<String> args, Operator operator)
+	public MultiquadricSVM(List<String> args, Operator operator) throws Exception
 	{
 		super(args, operator);
 		if(args.size() != 10)
 		{
-			Logger.getInstance().logToFile("Not enough arguments for the MultiquadricSVM");
-			System.exit(-1);
+			throw new Exception("Not enough arguments for the MultiquadricSVM");
 		}
 		setKernelSigma1(args.get(8));
 		setKernelShift(args.get(9));

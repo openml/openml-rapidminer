@@ -1,11 +1,7 @@
 package org.openml.experiment.operators;
 
 import org.openml.apiconnector.settings.Config;
-import org.openml.experiment.Logger;
 
-/*
- * Wrapper class for the RapidMiner Download Operator
- */
 import com.rapidminer.operator.Operator;
 
 /*
@@ -15,12 +11,11 @@ public class Download
 {
 	private Operator operator;
 	
-	public Download(Operator operator, Config config, String taskId)
+	public Download(Operator operator, Config config, String taskId) throws Exception
 	{
 		if(operator == null)
 		{
-			Logger.getInstance().logToFile("The operator reference given to Download is null");
-			System.exit(-1);
+			throw new Exception("The operator reference given to Download is null");
 		}
 		this.operator = operator;
 		setTaskId(taskId);

@@ -2,8 +2,6 @@ package org.openml.experiment.operators;
 
 import java.util.List;
 
-import org.openml.experiment.Logger;
-
 import com.rapidminer.operator.Operator;
 
 /*
@@ -13,12 +11,15 @@ public class DotSVM
 {
 	private Operator operator;
 	
-	public DotSVM(List<String> args, Operator operator)
+	public DotSVM(List<String> args, Operator operator) throws Exception
 	{
+		if(args.size() != 8)
+		{
+			throw new Exception("Not enough arguments even for most basic SVM");
+		}
 		if(operator == null)
 		{
-			Logger.getInstance().logToFile("The operator reference given to DotSVM is null");
-			System.exit(-1);
+			throw new Exception("The operator reference given to DotSVM is null");
 		}
 		this.operator = operator;
 		setKernelType(args.get(0));

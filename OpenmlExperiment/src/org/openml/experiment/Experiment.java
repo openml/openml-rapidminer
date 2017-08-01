@@ -1,8 +1,6 @@
 package org.openml.experiment;
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -45,24 +43,18 @@ public class Experiment
 	
 	public Experiment(List<String> arguments)
 	{
-		if(arguments.size() < 11)
-		{
-			Logger.getInstance().logToFile("Not enough arguments even for most basic SVM");
-			System.exit(-1);
-		}
-		args = arguments;
 		try
 		{
+			args = arguments;
 			taskId = arguments.get(0);
 			flowId = Integer.parseInt(arguments.get(1));
 			classificationStrategy = arguments.get(2);
 			config = getConfigurationFile();
-			buildExperiment();
+			buildSVMExperiment();
 		}
 		catch(Exception e)
 		{
 			Logger.getInstance().logToFile(e.getMessage() + ExceptionUtils.getStackTrace(e));
-			System.exit(-1);
 		}
 	}
 	
@@ -76,7 +68,7 @@ public class Experiment
 		args.remove(0);
 	}
 	
-	private void buildExperiment()
+	private void buildSVMExperiment()
 	{
 		try
 		{
@@ -95,11 +87,10 @@ public class Experiment
 		catch(Exception e)
 		{
 			Logger.getInstance().logToFile(e.getMessage() + ExceptionUtils.getStackTrace(e));
-			System.exit(-1);
 		}
 	}
 	
-	public void runExperiment()
+	public void run()
 	{
 		try
 		{
@@ -112,7 +103,6 @@ public class Experiment
 		catch(Exception e2)
 		{
 			Logger.getInstance().logToFile(e2.getMessage() + ExceptionUtils.getStackTrace(e2));
-			System.exit(-1);
 		}
 	}
 	
@@ -134,20 +124,13 @@ public class Experiment
 		return processFile;
 	}
 	
-	public static void main(String args[])
-	{
-		List<String> parameters = new ArrayList<String>();
-		parameters.addAll(Arrays.asList("22", "7061", "1 against 1", "multiquadric", "0.0", "0.001", "1.0", "1.0", "0.0", "0.0", "0.0", "1.0", "1.0"));
-		new Experiment(parameters).runExperiment();;
-	}
-	
 	/**
 	 * Build a particular SVM considering the kernel type and the arguments given
 	 * @param operator - RapidMiner SVM operator
 	 * @param kernelType - kernel type of the SVM
 	 * @return - SVM
 	 */
-	private DotSVM buildParticularSVM(Operator operator, String kernelType)
+	private DotSVM buildParticularSVM(Operator operator, String kernelType) throws Exception
 	{
 		DotSVM temp = null;
 		switch(kernelType)
@@ -178,7 +161,6 @@ public class Experiment
 				break;
 			default:
 				Logger.getInstance().logToFile("Wrong value for kernel type");
-				System.exit(-1);
 		}
 		return temp;
 	}
@@ -206,7 +188,7 @@ public class Experiment
 		return args;
 	}
 
-	public void setArgs(List<String> args) 
+	public void setArgs(List<String> args) throws Exception 
 	{
 		this.args = args;
 		svm = buildParticularSVM(svm.getOperator(), args.get(0));

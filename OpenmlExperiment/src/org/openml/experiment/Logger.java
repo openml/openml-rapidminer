@@ -9,10 +9,10 @@ public class Logger
 {
 	private static Logger instance;
 	private File file;
-	private final String dir = System.getProperty("user.dir");
+	private final String DIR = System.getProperty("user.dir");
 	private Logger()
 	{
-		file = new File(dir, "errorLog.txt");
+		file = new File(DIR, "errorLog.txt");
 		if(!(file.exists() && file.isFile()))
 		{
 			try
