@@ -1,4 +1,4 @@
-##Experiment
+## Experiment
 
 The project combines OpenMl and Rapidminer in creating a process with different parameters for its operators. The process includes a SVM operator for classification, but it can be changed according to the purpose. 
 
