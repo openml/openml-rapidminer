@@ -7,14 +7,13 @@ import com.rapidminer.operator.Operator;
 /*
  * Wrapper for the Upload operator in RapidMiner
  */
-public class Upload 
-{
+public class Upload {
+	
 	private Operator operator;
 	
-	public Upload(Operator operator, Config config) throws Exception
-	{
-		if(operator == null)
-		{
+	public Upload(Operator operator, Config config) throws Exception{
+		
+		if(operator == null){
 			throw new Exception("The operator reference given to Download is null");
 		}
 		this.operator = operator;
@@ -22,47 +21,43 @@ public class Upload
 		setApiKey(config.getApiKey());
 	}
 
-	public void setUrl(String url)
-	{
+	public void setUrl(String url){
+		
 		operator.setParameter("Url", url);
 	}
 	
-	public String getUrl()
-	{
-		try
-		{
+	public String getUrl(){
+		
+		try{
 			return operator.getParameter("Url");
 		}
-		catch(Exception e)
-		{
+		catch(Exception e){
 			return null;
 		}
 	}
 	
-	public void setApiKey(String apiKey)
-	{
+	public void setApiKey(String apiKey){
+		
 		operator.setParameter("Api key", apiKey);
 	}
 	
-	public String getApiKey()
-	{
-		try
-		{
+	public String getApiKey(){
+		
+		try{
 			return operator.getParameter("Api key");
 		}
-		catch(Exception e)
-		{
+		catch(Exception e){
 			return null;
 		}
 	}
 	
-	public Operator getOperator()
-	{
+	public Operator getOperator(){
+		
 		return operator;
 	}
 	
-	public void setOperator(Operator operator)
-	{
+	public void setOperator(Operator operator){
+		
 		this.operator = operator;
 	}
 }

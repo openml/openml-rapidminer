@@ -1,16 +1,16 @@
 package org.openml.experiment;
 import java.io.File;
 import java.net.URL;
-import java.util.List;
+import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.openml.apiconnector.io.OpenmlConnector;
 import org.openml.apiconnector.settings.Config;
 import org.openml.apiconnector.settings.Constants;
 import org.openml.apiconnector.xml.Flow;
 import org.openml.experiment.operators.AnovaSVM;
 import org.openml.experiment.operators.DotSVM;
+import org.openml.experiment.operators.SVM;
 import org.openml.experiment.operators.Download;
 import org.openml.experiment.operators.EpachnenikovSVM;
 import org.openml.experiment.operators.GaussianCombinationSVM;
@@ -30,80 +30,53 @@ import com.rapidminer.operator.Operator;
  * @author Arlind Kadra
  * Set up an experiment using multiple operators with a collection of parameters.
  */
-public class Experiment 
-{
-	private List<String> args;
+
+public class Experiment{
+	
+	private HashMap<String, String> args;
 	private String taskId;
 	private int flowId;
 	private Config config;
 	private String classificationStrategy;
 	private SVMWrapper wrapper;
-	private DotSVM svm;
+	private SVM svm;
 	private Process process;
 	
-	public Experiment(List<String> arguments)
-	{
-		try
-		{
-			args = arguments;
-			taskId = arguments.get(0);
-			flowId = Integer.parseInt(arguments.get(1));
-			classificationStrategy = arguments.get(2);
-			config = getConfigurationFile();
-			buildSVMExperiment();
-		}
-		catch(Exception e)
-		{
-			Logger.getInstance().logToFile(e.getMessage() + ExceptionUtils.getStackTrace(e));
-		}
+	public Experiment(HashMap<String, String> arguments) throws Exception{
+		
+		args = arguments;
+		taskId = arguments.get("task_id");
+		flowId = Integer.parseInt(arguments.get("flow_id"));
+		classificationStrategy = arguments.get("classification_strategy");
+		config = getConfigurationFile();
+		buildSVMExperiment();
 	}
 	
-	// Reduce the list size, since it will propagated to configure the SVM
-	private void keepOnlySVMParameters()
-	{
-		//args.subList(0, 3).clear();
-		// Removing first 3 elements
-		args.remove(0);
-		args.remove(0);
-		args.remove(0);
+	private void keepOnlySVMParameters(){
+		
+		args.remove("task_id");
+		args.remove("flow_id");
+		args.remove("classification_strategy");
 	}
 	
-	private void buildSVMExperiment()
-	{
-		try
-		{
-			File processFile = getTheProcessFile(flowId);
-			keepOnlySVMParameters();
-			RapidMiner.setExecutionMode(RapidMiner.ExecutionMode.COMMAND_LINE);
-			RapidMiner.init();
-			process = RapidMiner.readProcessFile(processFile);
-			processFile.deleteOnExit();
-			new Download(process.getOperator("Download"), getConfigurationFile(), taskId);
-			wrapper = new SVMWrapper(process.getOperator("Polynominal by Binominal Classification"), classificationStrategy);
-			Operator svmOperator = process.getOperator("SVM");
-			svm = buildParticularSVM(svmOperator, args.get(0));
-			new Upload(process.getOperator("Upload"), getConfigurationFile());
-		}
-		catch(Exception e)
-		{
-			Logger.getInstance().logToFile(e.getMessage() + ExceptionUtils.getStackTrace(e));
-		}
+	private void buildSVMExperiment() throws Exception{
+		
+		File processFile = getTheProcessFile(flowId);
+		keepOnlySVMParameters();
+		RapidMiner.setExecutionMode(RapidMiner.ExecutionMode.COMMAND_LINE);
+		RapidMiner.init();
+		process = RapidMiner.readProcessFile(processFile);
+		processFile.deleteOnExit();
+		new Download(process.getOperator("Download"), config, taskId);
+		wrapper = new SVMWrapper(process.getOperator("Polynominal by Binominal Classification"), classificationStrategy);
+		Operator svmOperator = process.getOperator("SVM");
+		svm = buildParticularSVM(svmOperator, args.get("kernel_type"));
+		new Upload(process.getOperator("Upload"), config);
 	}
 	
-	public void run()
-	{
-		try
-		{
-			process.run();
-		}
-		catch(NullPointerException e1)
-		{
-			Logger.getInstance().logToFile("An experiment needs to be build, there is no process");
-		}
-		catch(Exception e2)
-		{
-			Logger.getInstance().logToFile(e2.getMessage() + ExceptionUtils.getStackTrace(e2));
-		}
+	public void run() throws Exception{
+		
+		process.run();
 	}
 	
 	/**
@@ -112,8 +85,8 @@ public class Experiment
 	 * @return - The xml RapidMiner file that we want to run
 	 * @throws Exception
 	 */
-	private File getTheProcessFile(int flowId) throws Exception
-	{
+	private File getTheProcessFile(int flowId) throws Exception{
+		
 		OpenmlConnector connector = new OpenmlConnector(config.getServer(), config.getApiKey());
 		Flow flow = connector.flowGet(flowId);
 		String processUrl = flow.getSource_url();
@@ -128,13 +101,12 @@ public class Experiment
 	 * Build a particular SVM considering the kernel type and the arguments given
 	 * @param operator - RapidMiner SVM operator
 	 * @param kernelType - kernel type of the SVM
-	 * @return - SVM
+	 * @return - SVM Wrapper
 	 */
-	private DotSVM buildParticularSVM(Operator operator, String kernelType) throws Exception
-	{
-		DotSVM temp = null;
-		switch(kernelType)
-		{
+	private SVM buildParticularSVM(Operator operator, String kernelType) throws Exception{
+		
+		SVM temp = null;
+		switch(kernelType){
 			case "dot":
 				temp = new DotSVM(args, operator);
 				break;
@@ -160,7 +132,7 @@ public class Experiment
 				temp = new MultiquadricSVM(args, operator);
 				break;
 			default:
-				Logger.getInstance().logToFile("Wrong value for kernel type");
+				throw new Exception("Wrong value for kernel type");
 		}
 		return temp;
 	}
@@ -170,68 +142,69 @@ public class Experiment
 	 * @return - Config file
 	 * @throws Exception
 	 */
-	private Config getConfigurationFile() throws Exception
-	{
+	private Config getConfigurationFile() throws Exception{
+		
 		File configFile = new File(Constants.OPENML_DIRECTORY + "/openml.conf");
-		if(configFile.exists() && configFile.isFile())
-		{
+		if(configFile.exists() && configFile.isFile()){
 			return new Config();
 		}
-		else
-		{
+		else{
 			throw new Exception("No configuration file found");
 		}
 	}
 
-	public List<String> getArgs() 
-	{
+	public HashMap<String, String> getArgs(){
 		return args;
 	}
 
-	public void setArgs(List<String> args) throws Exception 
-	{
+	public void setArgs(HashMap<String, String> args){
+		
 		this.args = args;
-		svm = buildParticularSVM(svm.getOperator(), args.get(0));
+		if(svm != null){
+			svm.setParameters(args);
+		}
 	}
 
-	public String getTaskId() 
-	{
+	public String getTaskId(){
+		
 		return taskId;
 	}
 
-	public void setTaskId(String taskId) 
-	{
+	public void setTaskId(String taskId){
+		
 		this.taskId = taskId;
 	}
 
-	public int getFlowId() 
-	{
+	public int getFlowId(){
+		
 		return flowId;
 	}
 
-	public void setFlowId(int flowId) 
-	{
+	public void setFlowId(int flowId){
+		
 		this.flowId = flowId;
 	}
 
-	public Config getConfig() 
-	{
+	public Config getConfig(){
+		
 		return config;
 	}
 
-	public void setConfig(Config config) 
-	{
+	public void setConfig(Config config){
+		
 		this.config = config;
 	}
 
-	public String getClassificationStrategy() 
-	{
+	public String getClassificationStrategy(){
+		
 		return classificationStrategy;
 	}
 
-	public void setClassificationStrategy(String classificationStrategy) 
-	{
+	public void setClassificationStrategy(String classificationStrategy){
+		
 		this.classificationStrategy = classificationStrategy;
-		wrapper.setClassificationStrategy(classificationStrategy);	
+		if(wrapper != null) {
+			wrapper.setClassificationStrategy(classificationStrategy);
+		}
 	}
 }
