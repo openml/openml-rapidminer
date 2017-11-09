@@ -26,7 +26,8 @@ import com.rapidminer.example.set.SplittedExampleSet;
 import com.rapidminer.example.table.AttributeFactory;
 import com.rapidminer.example.table.DataRowFactory;
 import com.rapidminer.example.table.DoubleArrayDataRow;
-import com.rapidminer.example.table.MemoryExampleTable;
+import com.rapidminer.example.utils.ExampleSetBuilder;
+import com.rapidminer.example.utils.ExampleSets;
 import com.rapidminer.operator.Model;
 import com.rapidminer.operator.OperatorChain;
 import com.rapidminer.operator.OperatorDescription;
@@ -106,7 +107,7 @@ public class ExecuteOpenmlTask extends OperatorChain {
 
 		List<EvaluationScore> evaluationMeasures = new ArrayList<EvaluationScore>();
 		List<Attribute> predictionSetAttributes = predictionSetAttributes(dataset.getAttributes().getLabel());
-		MemoryExampleTable table = new MemoryExampleTable(predictionSetAttributes);
+		ExampleSetBuilder table = ExampleSets.from(predictionSetAttributes);
 		
 		for( int r = 0; r < repeats; ++r ) {
 			for( int f = 0; f < folds; ++f ) {
@@ -199,7 +200,7 @@ public class ExecuteOpenmlTask extends OperatorChain {
 			}
 		}
 		
-		OpenmlExecutedTask oet = new OpenmlExecutedTask(openmlTask.getTask().getTask_id(), table.createExampleSet(), evaluationMeasures);
+		OpenmlExecutedTask oet = new OpenmlExecutedTask(openmlTask.getTask().getTask_id(), table.build(), evaluationMeasures);
 		return oet;
 	}
 	
