@@ -45,6 +45,7 @@ import com.rapidminer.tools.OperatorService;
 
 public class XMLUtils {
 	private static String illegalClassPrefix = "openmlconnector:";
+	private static final String VERSION_NR = "RapidMiner_7.5.0";
 	
 	public static String prepare(String xml)
 			throws ParserConfigurationException, SAXException, IOException, ClassNotFoundException, InstantiationException, IllegalAccessException, ClassCastException {
@@ -180,7 +181,7 @@ public class XMLUtils {
 		
 		String operatorName = toOpenmlName(operatorClass, true);
 		
-		Flow current = new Flow(operatorName, operatorClass, operatorVersion, "A RapidMiner Operator", "English", "RapidMiner_7.5.0");
+		Flow current = new Flow(operatorName, operatorClass, operatorVersion, "A RapidMiner Operator", "English", VERSION_NR);
 	    
 	    NodeList nodeList = node.getChildNodes();
 	    for (int i = 0; i < nodeList.getLength(); i++) {
