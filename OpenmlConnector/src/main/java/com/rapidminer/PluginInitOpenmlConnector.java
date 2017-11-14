@@ -20,7 +20,7 @@
  */
 package com.rapidminer;
 
-import org.openml.rapidminer.utils.OpenmlConfigurator;
+import org.openml.rapidminer.models.OpenmlConfigurator;
 
 import com.rapidminer.gui.MainFrame;
 import com.rapidminer.tools.config.ConfigurationManager;

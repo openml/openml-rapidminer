@@ -1,7 +1,5 @@
 package org.openml.rapidminer.models;
 
-import org.openml.rapidminer.utils.OpenmlConfigurator;
-
 import com.rapidminer.tools.config.AbstractConfigurable;
 
 public class OpenmlConfigurable extends AbstractConfigurable {

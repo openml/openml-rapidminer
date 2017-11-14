@@ -1,6 +1,8 @@
 package org.openml.rapidminer;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,12 +12,15 @@ import org.openml.apiconnector.xml.EvaluationScore;
 import org.openml.apiconnector.xml.Flow;
 import org.openml.apiconnector.xml.Run;
 import org.openml.rapidminer.models.OpenmlConfigurable;
+import org.openml.rapidminer.models.OpenmlConfigurator;
 import org.openml.rapidminer.models.OpenmlExecutedTask;
 import org.openml.rapidminer.utils.ImplementationUtils;
-import org.openml.rapidminer.utils.OpenmlConfigurator;
 import org.openml.rapidminer.utils.OpenmlConnectorJson;
+import org.openml.rapidminer.utils.RMProcessUtils;
 import org.openml.rapidminer.utils.XMLUtils;
+import org.w3c.dom.Document;
 
+import com.rapidminer.Process;
 import com.rapidminer.MacroHandler;
 import com.rapidminer.operator.Operator;
 import com.rapidminer.operator.OperatorDescription;
@@ -31,7 +36,7 @@ import com.rapidminer.tools.config.ParameterTypeConfigurable;
 
 public class UploadOpenmlTask extends Operator {
 
-	private static String PARAMETER_CONFIG = "OpenML Connection";
+	private static String PARAMETER_CONFIG = "OpenML_Connection";
 	private static final String[] TAGS = {"RapidMiner"};
 	
 	private OpenmlConnectorJson openmlConnector;
@@ -43,7 +48,8 @@ public class UploadOpenmlTask extends Operator {
 	
 	@Override
 	public void doWork() throws OperatorException {
-		if (XMLUtils.validProcess(getProcess().getRootOperator().getXML(true)) == false) {
+		// TODO: remove statement!
+		if (RMProcessUtils.validProcess(getProcess().getRootOperator().getXML(true)) == false) {
 			throw new OperatorException("Not a valid OpenML process. Please check the OpenML definition. Note that each operator can only be used once. ");
 		}
 		
@@ -52,47 +58,39 @@ public class UploadOpenmlTask extends Operator {
 		String apikey;
 		String url;
 		MacroHandler mHandler = this.getProcess().getMacroHandler();
-		if(mHandler.getMacro("apikey")!= null && mHandler.getMacro("url")!= null)
-		{
+		if (mHandler.getMacro("apikey") != null && mHandler.getMacro("url") != null) {
 			apikey = mHandler.getMacro("apikey");
 			url = mHandler.getMacro("url");
-		}
-		else if(this.isParameterSet("Url") && this.isParameterSet("Api key"))
-		{
+		} else if (this.isParameterSet("Url") && this.isParameterSet("Api key")) {
 			url = this.getParameter("Url");
 			apikey = this.getParameter("Api key");
-		}
-		else
-		{
-			try 
-			{
-				config = (OpenmlConfigurable) ConfigurationManager.getInstance().lookup(
-				OpenmlConfigurator.TYPE_ID, getParameterAsString(PARAMETER_CONFIG), 
-				getProcess().getRepositoryAccessor());
+		} else {
+			try {
+				config = (OpenmlConfigurable) ConfigurationManager.getInstance().lookup(OpenmlConfigurator.TYPE_ID,
+						getParameterAsString(PARAMETER_CONFIG), getProcess().getRepositoryAccessor());
 				apikey = config.getApiKey();
 				url = config.getUrl();
-			} 
-			catch (ConfigurationException e) 
-			{
+			} catch (ConfigurationException e) {
 				throw new UserError(this, e, "openml.configuration_read");
 			}
-		}		openmlConnector = new OpenmlConnectorJson(url, apikey, true);
-		
+		}
+		openmlConnector = new OpenmlConnectorJson(url, apikey, true);
+		openmlConnector.setVerboseLevel(1);
 		try {
 			// TODO: make the user enter his other meta-data!
-			String processXml = XMLUtils.prepare(getProcess().getRootOperator().getXML(true));
-			Flow workflow = XMLUtils.xmlToImplementation(processXml);
+			Process canonicalProcess = RMProcessUtils.processToCanonicalProcess(getProcess());
+			Document processXml = RMProcessUtils.processToCanonicalXmlDocument(canonicalProcess);
+			String processXmlString = RMProcessUtils.processXmlToString(processXml);
 			
-			//Conversion.log("OK","Upload Run", XMLUtils.flowToXml(workflow, null, null));
+			Flow workflow = XMLUtils.processXmlToImpentation(canonicalProcess);
 			
-			int implementation_id = ImplementationUtils.getImplementationId(workflow, processXml, openmlConnector);
+			int implementation_id = ImplementationUtils.getImplementationId(workflow, processXmlString, openmlConnector);
 
 			// TODO: resolve parameter string
-			Run run = XMLUtils.xmlToRun(getProcess().getRootOperator().getXML(true), openmlConnector, implementation_id, oet.getTaskId(), TAGS); //new Run(oet.getTaskId(), null, implementation_id, "", null, TAGS);
+			Run run = XMLUtils.processXmlToRun(getProcess().getRootOperator().getXML(true), openmlConnector, implementation_id, oet.getTaskId(), TAGS); 
 			for (EvaluationScore score : oet.getEvaluationMeasures()) {
 				run.addOutputEvaluation(score);
 			}
-			
 			
 			//Conversion.log("OK","Upload Run", XMLUtils.runToXml(run));
 			
@@ -102,10 +100,12 @@ public class UploadOpenmlTask extends Operator {
 			File predictionArff = Conversion.stringToTempFile(WekaTools.toWekaInstances(oet.getPredictions(), taskName , WekaInstancesAdaptor.CLUSTERING).toString(), taskName, "arff");
 			files.put("predictions", predictionArff);
 			
-			openmlConnector.runUpload(XMLUtils.runToXml(run), files);
+			Document runXml = XMLUtils.runToXml(run);
+			
+			openmlConnector.runUpload(XMLUtils.DomDocumentToFile(runXml), files);
 		} catch(Exception e) {
 			e.printStackTrace();
-			throw new OperatorException("Error uploading task to Openml: " + e.getMessage() + " " + org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
+			throw new OperatorException("Error uploading task to Openml: " + e.getMessage() + " - " + stacktraceAsString(e));
 		}
 	}
 	
@@ -114,5 +114,12 @@ public class UploadOpenmlTask extends Operator {
 		List<ParameterType> types = super.getParameterTypes();
 		types.add(new ParameterTypeConfigurable(PARAMETER_CONFIG, "Choose an OpenML Connection", OpenmlConfigurator.TYPE_ID));
 		return types;
+	}
+	
+	private String stacktraceAsString(Exception e) {
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		e.printStackTrace(pw);
+		return sw.toString();
 	}
 }

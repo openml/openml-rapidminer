@@ -8,8 +8,8 @@ import org.openml.apiconnector.xml.DataSetDescription;
 import org.openml.apiconnector.xml.Task;
 import org.openml.apiconnector.xml.Task.Input.Data_set;
 import org.openml.rapidminer.models.OpenmlConfigurable;
+import org.openml.rapidminer.models.OpenmlConfigurator;
 import org.openml.rapidminer.models.OpenmlTask;
-import org.openml.rapidminer.utils.OpenmlConfigurator;
 import org.openml.rapidminer.utils.OpenmlConnectorJson;
 
 import com.rapidminer.MacroHandler;
@@ -28,8 +28,8 @@ public class DownloadOpenmlTask extends Operator {
 
 	private OpenmlConnectorJson openmlConnector;
 	
-	private static String PARAMETER_TASKID = "Task id";
-	private static String PARAMETER_CONFIG = "OpenML Connection";
+	private static String PARAMETER_TASKID = "Task_id";
+	private static String PARAMETER_CONFIG = "OpenML_Connection";
 	
 	private OutputPort taskOutput = getOutputPorts().createPort("task");
 
@@ -98,7 +98,7 @@ public class DownloadOpenmlTask extends Operator {
 			dsd = openmlConnector.dataGet(sourceData.getData_set_id());
 		} 
 		catch (Exception e) {
-			throw new OperatorException("Error retrieving task from Openml: " + e.getMessage() + " " + org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
+			throw new OperatorException("Error retrieving task from Openml: " + e.getMessage());
 		}
 
 		OpenmlTask openmltask = new OpenmlTask(task,dsd);

@@ -1,10 +1,9 @@
-package org.openml.rapidminer.utils;
+package org.openml.rapidminer.models;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.openml.apiconnector.settings.Settings;
-import org.openml.rapidminer.models.OpenmlConfigurable;
 
 import com.rapidminer.parameter.ParameterHandler;
 import com.rapidminer.parameter.ParameterType;

@@ -80,7 +80,7 @@ public class ExecuteOpenmlTask extends OperatorChain {
 		} catch( Exception e ) {
 			System.out.println("Exception: " + e.getMessage() );
 			e.printStackTrace();
-			throw new OperatorException(e.getMessage() + " " + org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
+			throw new OperatorException(e.getMessage());
 		}
 	}
 	
