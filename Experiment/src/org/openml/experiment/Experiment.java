@@ -1,6 +1,7 @@
 package org.openml.experiment;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -12,11 +13,15 @@ import org.openml.apiconnector.settings.Config;
 import org.openml.apiconnector.settings.Constants;
 import org.openml.apiconnector.xml.Flow;
 import org.openml.apiconnector.xml.SetupParameters;
-import org.openml.apiconnector.xml.SetupParameters.Parameter;
+import org.openml.experiment.utils.DataUtils;
 
 import com.rapidminer.Process;
 import com.rapidminer.RapidMiner;
+import com.rapidminer.operator.AbstractIOObject;
+import com.rapidminer.operator.IOContainer;
+import com.rapidminer.operator.MissingIOObjectException;
 import com.rapidminer.operator.Operator;
+import com.rapidminer.operator.OperatorException;
 
 public class Experiment {
 	
@@ -26,9 +31,10 @@ public class Experiment {
 	private String url = null;
 	private String key = null;
 	private Logger logger;
+	Process process;
 	private HashMap<String, HashMap<String, String>> parameters;
 	
-	public Experiment(HashMap<String, String> parameters) throws Exception{
+	public Experiment(HashMap<String, String> parameters) {
 		
 		logger = Logger.getInstance();
 		
@@ -40,52 +46,53 @@ public class Experiment {
 			if(parameters.containsKey("url") && parameters.containsKey("key")) {
 				this.url = parameters.get("url");
 				this.key = parameters.get("key");
-			}
-			else {
+			} else {
 				Config config = getConfigurationFile();
 				this.url = config.getServer();
 				this.key = config.getApiKey();
 			}
-			this.build();
-		}
-		catch(NumberFormatException e) {
+		} catch(NumberFormatException | FileNotFoundException e) {
 			logger.logToFile(e.getMessage() + ExceptionUtils.getStackTrace(e));
-			throw e;
-		}
-		catch(Exception e) {
-			logger.logToFile(e.getMessage() + ExceptionUtils.getStackTrace(e));
-			throw e;
+			System.exit(0);
 		}
 	}
 	
 	/** Build the experiment by configuring the operators with their corresponding parameters.
 	 * 
-	 * @throws Exception
 	 */
-	private void build() throws Exception{
-		
-		File processFile;
-		OpenmlConnector connector = new OpenmlConnector(this.url, this.key);
+	public void setUp() {
 		
 		try {
-			processFile = getTheProcessFile(this.flowId, connector);
+			OpenmlConnector connector = new OpenmlConnector(this.url, this.key);
+			File processFile = getTheProcessFile(this.flowId, connector);
 			SetupParameters paramFile = connector.setupParameters(this.setupId);
-			this.parameters = groupParameters(paramFile);
-		}
-		catch(Exception e) {
+			this.parameters = DataUtils.groupParameters(paramFile);
+			RapidMiner.setExecutionMode(RapidMiner.ExecutionMode.COMMAND_LINE);
+			RapidMiner.init();
+			this.process = RapidMiner.readProcessFile(processFile);
+			processFile.deleteOnExit();
+			configureDownloadOp(process, this.url, this.key, this.taskId);
+			configureUploadOp(process, this.url, this.key);
+			configureOtherOp(process, this.parameters);
+		} catch(Exception e) {
 			logger.logToFile(e.getMessage() + ExceptionUtils.getStackTrace(e));
-			throw e;
+			System.exit(0);
 		}
-		RapidMiner.setExecutionMode(RapidMiner.ExecutionMode.COMMAND_LINE);
-		RapidMiner.init();
-		Process process = RapidMiner.readProcessFile(processFile);
-		processFile.deleteOnExit();
-		configureDownloadOp(process, this.url, this.key, this.taskId);
-		configureUploadOp(process, this.url, this.key);
-		configureOtherOp(process, this.parameters);
 		
-		process.run();
-
+	}
+	
+	public int run() {
+		
+		try {
+			IOContainer c = process.run();
+			AbstractIOObject uploadRun = c.get(AbstractIOObject.class);
+			return Integer.parseInt(uploadRun.toString());
+		} catch(MissingIOObjectException | NumberFormatException e) {
+			logger.logToFile(e.getMessage() + ExceptionUtils.getStackTrace(e));
+		} catch (OperatorException e) {
+			logger.logToFile(e.getMessage() + ExceptionUtils.getStackTrace(e));
+		}
+		return -1;
 	}
 	
 	private void configureDownloadOp(Process process, String url, String key, String taskId ) {
@@ -114,35 +121,6 @@ public class Experiment {
 	}
 	
 	/**
-	 * Groups the parameter names and values on a HashMap. The HashMaps are then grouped on operators in another HashMap.
-	 * @param paramFile 
-	 * @return
-	 */
-	private HashMap<String, HashMap<String, String>> groupParameters(SetupParameters paramFile) {
-		
-		HashMap<String, HashMap<String, String>> parameters = new HashMap<String, HashMap<String, String>>();
-		
-		for(Parameter param: paramFile.getParameters()) {
-			String[] mapping = param.getParameter_name().split("__");
-			String operator = mapping[0];
-			String paramName = mapping[1];
-			String value = param.getValue();
-			if(parameters.containsKey(operator)) {
-				HashMap<String, String> temp = parameters.get(operator);
-				temp.put(paramName, value);
-				parameters.put(operator, temp);
-			}
-			else {
-				HashMap<String, String> temp = new HashMap<String, String>();
-				temp.put(paramName, value);
-				parameters.put(operator, temp);
-				
-			}
-		}
-		return parameters;
-	}
-	
-	/**
 	 * Uses the processUrl field from the flow and downloads the process file.
 	 * @param flowId
 	 * @param connector
@@ -166,14 +144,21 @@ public class Experiment {
 	 * @return - Config file
 	 * @throws Exception
 	 */
-	private Config getConfigurationFile() throws Exception {
+	private Config getConfigurationFile() throws FileNotFoundException {
 		
 		File configFile = new File(Constants.OPENML_DIRECTORY + "/openml.conf");
 		if(configFile.exists() && configFile.isFile()) {
 			return new Config();
+		} else {
+			throw new FileNotFoundException("No configuration file found");
 		}
-		else {
-			throw new Exception("No configuration file found");
-		}
+	}
+	
+	public HashMap<String, HashMap<String, String>> getParameters() {
+		return this.parameters;
+	}
+	
+	public void setParameters(HashMap<String, HashMap<String, String>> paramMap) {
+		this.parameters = paramMap;
 	}
 }

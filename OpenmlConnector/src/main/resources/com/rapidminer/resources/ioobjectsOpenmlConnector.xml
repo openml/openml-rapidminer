@@ -1,4 +1,10 @@
 <ioobjects>
+	<ioobject
+		name="OpenmlUploadRun"
+		class="org.openml.apiconnector.xml.UploadRun"
+		reportable="false">
+	  <renderer>com.rapidminer.gui.renderer.DefaultTextRenderer</renderer>
+	</ioobject>
 <!--  
     This is an example how to specify IOObjects and theirs various renderers.
 	<ioobject
