@@ -40,7 +40,6 @@ public class Experiment {
 		
 		try {
 			this.taskId = parameters.get("task_id");
-			this.flowId = Integer.parseInt(parameters.get("flow_id"));
 			this.setupId = Integer.parseInt(parameters.get("setup_id"));
 			
 			if(parameters.containsKey("url") && parameters.containsKey("key")) {
@@ -64,8 +63,9 @@ public class Experiment {
 		
 		try {
 			OpenmlConnector connector = new OpenmlConnector(this.url, this.key);
-			File processFile = getTheProcessFile(this.flowId, connector);
 			SetupParameters paramFile = connector.setupParameters(this.setupId);
+			this.flowId = paramFile.getFlow_id();
+			File processFile = getTheProcessFile(this.flowId, connector);
 			this.parameters = DataUtils.groupParameters(paramFile);
 			RapidMiner.setExecutionMode(RapidMiner.ExecutionMode.COMMAND_LINE);
 			RapidMiner.init();

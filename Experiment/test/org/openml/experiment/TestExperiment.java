@@ -17,6 +17,7 @@ public class TestExperiment {
 	private OpenmlConnector connector;
 	private Run run;
 	private Experiment exp;
+	File exampleFlow;
 	
 	@Before
 	public void setUp() throws Exception {
@@ -28,6 +29,8 @@ public class TestExperiment {
 		map.put("url", "https://test.openml.org/");
 		map.put("key", "4bf26c358bdd980987cf4d327508fed5");
 		connector = new OpenmlConnector("https://test.openml.org/", "4bf26c358bdd980987cf4d327508fed5");
+		this.exampleFlow("resources/example_flow.xml");
+		connector.flowUpload(description, binary, source);
 		exp = new Experiment(map);
 		exp.setUp();
 		int runId = exp.run();
