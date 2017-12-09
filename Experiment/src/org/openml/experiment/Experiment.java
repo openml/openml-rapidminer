@@ -31,8 +31,13 @@ public class Experiment {
 	private String url = null;
 	private String key = null;
 	private Logger logger;
-	Process process;
+	private Process process;
 	private HashMap<String, HashMap<String, String>> parameters;
+	private OpenmlConnector connector;
+	
+	public Experiment() {
+		logger = Logger.getInstance();
+	}
 	
 	public Experiment(HashMap<String, String> parameters) {
 		
@@ -50,7 +55,15 @@ public class Experiment {
 				this.url = config.getServer();
 				this.key = config.getApiKey();
 			}
+			this.connector = new OpenmlConnector(this.url, this.key);
+			SetupParameters paramFile = this.connector.setupParameters(this.setupId);
+			this.flowId = paramFile.getFlow_id();
+			this.parameters = DataUtils.groupParameters(paramFile);
+			
 		} catch(NumberFormatException | FileNotFoundException e) {
+			logger.logToFile(e.getMessage() + ExceptionUtils.getStackTrace(e));
+			System.exit(0);
+		} catch (Exception e) {
 			logger.logToFile(e.getMessage() + ExceptionUtils.getStackTrace(e));
 			System.exit(0);
 		}
@@ -62,11 +75,7 @@ public class Experiment {
 	public void setUp() {
 		
 		try {
-			OpenmlConnector connector = new OpenmlConnector(this.url, this.key);
-			SetupParameters paramFile = connector.setupParameters(this.setupId);
-			this.flowId = paramFile.getFlow_id();
-			File processFile = getTheProcessFile(this.flowId, connector);
-			this.parameters = DataUtils.groupParameters(paramFile);
+			File processFile = getTheProcessFile(this.flowId, this.connector);
 			RapidMiner.setExecutionMode(RapidMiner.ExecutionMode.COMMAND_LINE);
 			RapidMiner.init();
 			this.process = RapidMiner.readProcessFile(processFile);
@@ -160,5 +169,53 @@ public class Experiment {
 	
 	public void setParameters(HashMap<String, HashMap<String, String>> paramMap) {
 		this.parameters = paramMap;
+	}
+
+	public String getTaskId() {
+		return taskId;
+	}
+
+	public void setTaskId(String taskId) {
+		this.taskId = taskId;
+	}
+
+	public int getFlowId() {
+		return flowId;
+	}
+
+	public void setFlowId(int flowId) {
+		this.flowId = flowId;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public Logger getLogger() {
+		return logger;
+	}
+
+	public void setLogger(Logger logger) {
+		this.logger = logger;
+	}
+
+	public OpenmlConnector getConnector() {
+		return connector;
+	}
+
+	public void setConnector(OpenmlConnector connector) {
+		this.connector = connector;
 	}
 }
