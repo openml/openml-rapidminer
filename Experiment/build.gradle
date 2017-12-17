@@ -20,6 +20,8 @@ dependencies {
 	compile group: 'nz.ac.waikato.cms.weka', name: 'weka-dev', version: '3.9.1'
 	compile group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.7'
 	compile files('libs/ApiConnectorSnapshot.jar')
+	
+	// Including the RapidMiner libs
 	compile fileTree(dir: 'C:\\Program Files\\RapidMiner\\RapidMiner Studio\\lib\\', include: ['*.jar'])
     // Use JUnit test framework
     testCompile 'junit:junit:4.12'
@@ -27,4 +29,7 @@ dependencies {
 
 // Define the main class for the application
 mainClassName = 'Main'
+
+description = 'A project that runs a flow with a certain parameter setup using RapidMiner and uploads the results to OpenMl'
+version = '1.0'
 

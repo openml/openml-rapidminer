@@ -89,9 +89,9 @@ public class Experiment {
 	
 	private void configureUploadOp(Process process, String url, String key) {
 
-		Operator download = process.getOperator("Upload");           
-		download.setParameter("Url", url);
-		download.setParameter("Api key", key);
+		Operator upload = process.getOperator("Upload");           
+		upload.setParameter("Url", url);
+		upload.setParameter("Api key", key);
 	}
 	
 	private void configureOtherOp(Process process, HashMap<String, HashMap<String, String>> param) {
