@@ -1,0 +1,35 @@
+// Apply the java plugin to add support for Java
+apply plugin: 'java'
+
+// Apply the application plugin to add support for building an application
+apply plugin: 'application'
+
+// In this section you declare where to find the dependencies of your project
+repositories {
+    jcenter()
+	mavenCentral()
+}
+
+dependencies {
+	compile group: 'commons-io', name: 'commons-io', version: '2.6'
+	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
+	compile group: 'commons-logging', name: 'commons-logging', version: '1.2'
+	compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.4'
+	compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.4.8'
+	compile group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.4'
+	compile group: 'nz.ac.waikato.cms.weka', name: 'weka-dev', version: '3.9.1'
+	compile group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.7'
+	compile files('libs/ApiConnectorSnapshot.jar')
+	
+	// Including the RapidMiner libs
+	compile fileTree(dir: 'C:\\Program Files\\RapidMiner\\RapidMiner Studio\\lib\\', include: ['*.jar'])
+    // Use JUnit test framework
+    testCompile 'junit:junit:4.12'
+}
+
+// Define the main class for the application
+mainClassName = 'Main'
+
+description = 'A project that runs a flow with a certain parameter setup using RapidMiner and uploads the results to OpenMl'
+version = '1.0'
+

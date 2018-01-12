@@ -11,9 +11,11 @@ import org.openml.apiconnector.algorithms.Conversion;
 import org.openml.apiconnector.xml.EvaluationScore;
 import org.openml.apiconnector.xml.Flow;
 import org.openml.apiconnector.xml.Run;
+import org.openml.apiconnector.xml.UploadRun;
 import org.openml.rapidminer.models.OpenmlConfigurable;
 import org.openml.rapidminer.models.OpenmlConfigurator;
 import org.openml.rapidminer.models.OpenmlExecutedTask;
+import org.openml.rapidminer.models.OpenmlUploadRun;
 import org.openml.rapidminer.utils.ImplementationUtils;
 import org.openml.rapidminer.utils.OpenmlConnectorJson;
 import org.openml.rapidminer.utils.RMProcessUtils;
@@ -27,6 +29,7 @@ import com.rapidminer.operator.OperatorDescription;
 import com.rapidminer.operator.OperatorException;
 import com.rapidminer.operator.UserError;
 import com.rapidminer.operator.ports.InputPort;
+import com.rapidminer.operator.ports.OutputPort;
 import com.rapidminer.parameter.ParameterType;
 import com.rapidminer.tools.WekaInstancesAdaptor;
 import com.rapidminer.tools.WekaTools;
@@ -41,6 +44,7 @@ public class UploadOpenmlTask extends Operator {
 	
 	private OpenmlConnectorJson openmlConnector;
 	private InputPort predictionsInput = getInputPorts().createPort("predictions",OpenmlExecutedTask.class);
+	private OutputPort uploadRunOutput = getOutputPorts().createPort("run id");
 	
 	public UploadOpenmlTask(OperatorDescription description) {
 		super(description);
@@ -102,7 +106,9 @@ public class UploadOpenmlTask extends Operator {
 			
 			Document runXml = XMLUtils.runToXml(run);
 			
-			openmlConnector.runUpload(XMLUtils.DomDocumentToFile(runXml), files);
+			UploadRun uploadRun = openmlConnector.runUpload(XMLUtils.DomDocumentToFile(runXml), files);
+			uploadRunOutput.deliver(new OpenmlUploadRun(uploadRun));
+			
 		} catch(Exception e) {
 			e.printStackTrace();
 			throw new OperatorException("Error uploading task to Openml: " + e.getMessage() + " - " + stacktraceAsString(e));
