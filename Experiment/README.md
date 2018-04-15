@@ -5,4 +5,5 @@ The project combines OpenMl and Rapidminer in creating a process with different 
 ## Usage
 
 - Include the following libraries in the project: "The directory that you installed RapidMiner\RapidMiner\RapidMiner Studio\lib\*" (RapidMiner must be installed)
+- Java OpenMl connector 
 - A config file for OpenMl, at least with your credentials.
